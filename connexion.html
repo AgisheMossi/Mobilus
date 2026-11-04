@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Connexion | MOBILUS</title>
+<link rel="stylesheet" href="connexion.css">
+</head>
+<body>
+<main class="connexion-container">
+    <a href="index.html" class="logo">
+        <img src="mobilus.png" alt="Logo MOBILUS"
+             onerror="this.style.display='none'">
+        <span class="logo-nom">MOBILUS</span>
+    </a>
+    <section class="connexion-box">
+        <h1>Bienvenue sur MOBILUS</h1>
+        <p class="sous-titre">
+            Connecte-toi pour retrouver tes films et séries préférés.
+        </p>
+        <form id="formConnexion">
+            <label for="email">Adresse e-mail</label>
+            <input
+                type="email"
+                id="email"
+                placeholder="exemple@email.com"
+                autocomplete="email"
+                required
+            >
+            <label for="motdepasse">Mot de passe</label>
+            <input
+                type="password"
+                id="motdepasse"
+                placeholder="Ton mot de passe"
+                autocomplete="current-password"
+                required
+            >
+            <button type="submit" id="boutonConnexion">
+                Se connecter
+            </button>
+        </form>
+        <div class="separateur">
+            <span>OU</span>
+        </div>
+        <button type="button" id="boutonGoogle" class="bouton-google">
+            <span class="google-g">G</span>
+            Continuer avec Google
+        </button>
+        <p id="message" role="status" aria-live="polite"></p>
+        <p class="inscription">
+            Tu n'as pas encore de compte ?
+            <span>La création de compte sera ajoutée ensuite.</span>
+        </p>
+        <p class="conditions">
+            En te connectant, tu acceptes les conditions d'utilisation
+            de MOBILUS.
+        </p>
+    </section>
+    <footer>
+        © 2026 MOBILUS — Films et séries
+    </footer>
+</main>
+<script type="module">
+    import { initializeApp }
+        from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+    import {
+        getAuth,
+        signInWithEmailAndPassword,
+        GoogleAuthProvider,
+        signInWithPopup,
+        onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
+    /*
+     * IMPORTANT :
+     * Ces valeurs sont des exemples.
+     * Remplace-les par la configuration de ton projet Firebase.
+     */
+    const firebaseConfig = {
+        apiKey: "TON_API_KEY",
+        authDomain: "TON_PROJET.firebaseapp.com",
+        projectId: "TON_PROJECT_ID",
+        appId: "TON_APP_ID"
+    };
+    const formulaire = document.getElementById("formConnexion");
+    const champEmail = document.getElementById("email");
+    const champMotdepasse = document.getElementById("motdepasse");
+    const message = document.getElementById("message");
+    const boutonConnexion = document.getElementById("boutonConnexion");
+    const boutonGoogle = document.getElementById("boutonGoogle");
+    let auth = null;
+    let configurationValide = false;
+    function afficherMessage(texte, erreur = true) {
+        message.textContent = texte;
+        message.className = erreur ? "erreur" : "succes";
+    }
+    try {
+        configurationValide =
+            firebaseConfig.apiKey !== "TON_API_KEY" &&
+            firebaseConfig.authDomain !== "TON_PROJET.firebaseapp.com" &&
+            firebaseConfig.projectId !== "TON_PROJECT_ID" &&
+            firebaseConfig.appId !== "TON_APP_ID";
+        if (configurationValide) {
+            const application = initializeApp(firebaseConfig);
+            auth = getAuth(application);
+            onAuthStateChanged(auth, (utilisateur) => {
+                if (utilisateur) {
+                    ouvrirMobilus(utilisateur);
+                }
+            });
+        }
+    } catch (erreur) {
+        console.error("Erreur de configuration Firebase :", erreur);
+    }
+    function verifierConfiguration() {
+        if (!configurationValide || !auth) {
+            afficherMessage(
+                "La connexion n'est pas encore configurée. Il faut d'abord relier MOBILUS à ton projet Firebase."
+            );
+            return false;
+        }
+        return true;
+    }
+    function ouvrirMobilus(utilisateur) {
+        localStorage.setItem("mobilusConnecte", "oui");
+        localStorage.setItem("mobilusEmail", utilisateur.email || "");
+        window.location.replace("index.html");
+    }
+    formulaire.addEventListener("submit", async (evenement) => {
+        evenement.preventDefault();
+        if (!verifierConfiguration()) return;
+        const email = champEmail.value.trim();
+        const motdepasse = champMotdepasse.value;
+        boutonConnexion.disabled = true;
+        boutonConnexion.textContent = "Connexion...";
+        afficherMessage("Vérification de tes identifiants...", false);
+        try {
+            const resultat = await signInWithEmailAndPassword(
+                auth,
+                email,
+                motdepasse
+            );
+            ouvrirMobilus(resultat.user);
+        } catch (erreur) {
+            console.error("Erreur de connexion :", erreur);
+            if (erreur.code === "auth/invalid-credential" ||
+                erreur.code === "auth/wrong-password" ||
+                erreur.code === "auth/user-not-found") {
+                afficherMessage(
+                    "E-mail ou mot de passe incorrect."
+                );
+            } else if (erreur.code === "auth/too-many-requests") {
+                afficherMessage(
+                    "Trop de tentatives. Réessaie plus tard."
+                );
+            } else {
+                afficherMessage(
+                    "Connexion impossible. Vérifie ta configuration Firebase et réessaie."
+                );
+            }
+        } finally {
+            boutonConnexion.disabled = false;
+            boutonConnexion.textContent = "Se connecter";
+        }
+    });
+    boutonGoogle.addEventListener("click", async () => {
+        if (!verifierConfiguration()) return;
+        boutonGoogle.disabled = true;
+        afficherMessage("Ouverture de Google...", false);
+        try {
+            const fournisseur = new GoogleAuthProvider();
+            const resultat = await signInWithPopup(
+                auth,
+                fournisseur
+            );
+            ouvrirMobilus(resultat.user);
+        } catch (erreur) {
+            console.error("Erreur Google :", erreur);
+            afficherMessage(
+                "Connexion Google impossible. Vérifie que Google est activé dans Firebase et que ton site est autorisé."
+            );
+        } finally {
+            boutonGoogle.disabled = false;
+        }
+    });
+</script>
+</body>
+</html>

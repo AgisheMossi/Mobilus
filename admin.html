@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Administration | MOBILUS</title>
+
+    <meta name="theme-color" content="#0b0b0e">
+
+    <link rel="stylesheet" href="admin.css">
+</head>
+
+<body>
+
+<header class="topbar">
+    <a href="index.html" class="logo">
+        MOBIL<span>US</span>
+    </a>
+
+    <div class="admin-label">ADMINISTRATION</div>
+
+    <a href="index.html" class="back-button">
+        ← Catalogue
+    </a>
+</header>
+
+<main class="container">
+
+    <!-- BIENVENUE -->
+    <section class="welcome">
+        <div>
+            <p class="eyebrow">ESPACE ADMINISTRATEUR</p>
+
+            <h1>Gestion du catalogue</h1>
+
+            <p>
+                Ajoute, modifie et organise tes films et séries.
+            </p>
+        </div>
+    </section>
+
+    <!-- STATISTIQUES -->
+    <section class="stats">
+
+        <div class="stat-card">
+            <span class="stat-icon">🎬</span>
+
+            <div>
+                <p>Total des contenus</p>
+                <h2 id="totalFilms">0</h2>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <span class="stat-icon">🎞️</span>
+
+            <div>
+                <p>Films</p>
+                <h2 id="totalMovies">0</h2>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <span class="stat-icon">📺</span>
+
+            <div>
+                <p>Séries</p>
+                <h2 id="totalSeries">0</h2>
+            </div>
+        </div>
+
+    </section>
+
+    <!-- FORMULAIRE -->
+    <section class="panel">
+
+        <div class="panel-heading">
+            <div>
+                <p class="eyebrow">GESTION DU CONTENU</p>
+
+                <h2 id="formTitle">
+                    Ajouter un film ou une série
+                </h2>
+            </div>
+        </div>
+
+        <form id="filmForm">
+
+            <input type="hidden" id="filmId">
+
+            <div class="form-grid">
+
+                <!-- TITRE -->
+                <div class="field full">
+                    <label for="titre">
+                        Titre du film ou de la série *
+                    </label>
+
+                    <input
+                        type="text"
+                        id="titre"
+                        placeholder="Ex. : Le Royaume perdu"
+                        required
+                    >
+                </div>
+
+                <!-- ANNÉE -->
+                <div class="field">
+                    <label for="annee">Année de sortie *</label>
+
+                    <input
+                        type="number"
+                        id="annee"
+                        min="1900"
+                        max="2100"
+                        placeholder="2026"
+                        required
+                    >
+                </div>
+
+                <!-- TYPE -->
+                <div class="field">
+                    <label for="type">Type de contenu *</label>
+
+                    <select id="type" required>
+                        <option value="Film">Film</option>
+                        <option value="Série">Série</option>
+                    </select>
+                </div>
+
+                <!-- CATÉGORIE -->
+                <div class="field">
+                    <label for="categorie">Catégorie *</label>
+
+                    <select id="categorie" required>
+                        <option value="Action">Action</option>
+                        <option value="Aventure">Aventure</option>
+                        <option value="Comédie">Comédie</option>
+                        <option value="Drame">Drame</option>
+                        <option value="Romance">Romance</option>
+                        <option value="Science-fiction">Science-fiction</option>
+                        <option value="Horreur">Horreur</option>
+                        <option value="Animation">Animation</option>
+                        <option value="Thriller">Thriller</option>
+                        <option value="Documentaire">Documentaire</option>
+                        <option value="Autre">Autre</option>
+                    </select>
+                </div>
+
+                <!-- DURÉE -->
+                <div class="field">
+                    <label for="duree">Durée</label>
+
+                    <input
+                        type="text"
+                        id="duree"
+                        placeholder="Ex. : 2 h 15 min ou 3 saisons"
+                    >
+                </div>
+
+                <!-- LANGUE -->
+                <div class="field">
+                    <label for="langue">Langue</label>
+
+                    <select id="langue">
+                        <option value="">Non précisée</option>
+                        <option value="Français">Français</option>
+                        <option value="VF">VF</option>
+                        <option value="VOSTFR">VOSTFR</option>
+                        <option value="Anglais">Anglais</option>
+                        <option value="Autre">Autre</option>
+                    </select>
+                </div>
+
+                <!-- CLASSIFICATION -->
+                <div class="field">
+                    <label for="classification">
+                        Classification d'âge
+                    </label>
+
+                    <select id="classification">
+                        <option value="">Non précisée</option>
+                        <option value="Tout public">Tout public</option>
+                        <option value="-10 ans">-10 ans</option>
+                        <option value="-12 ans">-12 ans</option>
+                        <option value="-16 ans">-16 ans</option>
+                        <option value="-18 ans">-18 ans</option>
+                    </select>
+                </div>
+
+                <!-- EMOJI -->
+                <div class="field">
+                    <label for="emoji">Icône de remplacement</label>
+
+                    <input
+                        type="text"
+                        id="emoji"
+                        value="🎬"
+                        maxlength="10"
+                        placeholder="🎬"
+                    >
+                </div>
+
+                <!-- DESCRIPTION -->
+                <div class="field full">
+                    <label for="description">Description</label>
+
+                    <textarea
+                        id="description"
+                        rows="4"
+                        placeholder="Présente brièvement le film ou la série..."
+                    ></textarea>
+                </div>
+
+            </div>
+
+            <!-- MISE À LA UNE -->
+            <div class="divider"></div>
+
+            <div class="featured-option">
+
+                <label class="featured-label" for="featured">
+                    <input type="checkbox" id="featured">
+
+                    <span>
+                        <strong>⭐ Mettre ce contenu à la une</strong>
+
+                        <small>
+                            Le contenu sélectionné sera présenté dans
+                            la bannière de la page d'accueil.
+                        </small>
+                    </span>
+                </label>
+
+            </div>
+
+            <!-- MÉDIAS -->
+            <div class="divider"></div>
+
+            <h3>Comment ajouter le contenu ?</h3>
+
+            <div class="mode-options">
+
+                <label class="mode-card selected" id="modeLocalCard">
+
+                    <input
+                        type="radio"
+                        name="mode"
+                        value="local"
+                        checked
+                    >
+
+                    <span class="mode-icon">📱</span>
+
+                    <span class="mode-title">
+                        Depuis mon iPhone
+                    </span>
+
+                    <span class="mode-description">
+                        Choisir une affiche et une vidéo dans Fichiers
+                        ou Photos.
+                    </span>
+
+                </label>
+
+                <label class="mode-card" id="modeOnlineCard">
+
+                    <input
+                        type="radio"
+                        name="mode"
+                        value="online"
+                    >
+
+                    <span class="mode-icon">🌐</span>
+
+                    <span class="mode-title">
+                        Depuis Internet
+                    </span>
+
+                    <span class="mode-description">
+                        Utiliser les liens d'une affiche et d'une vidéo
+                        en ligne.
+                    </span>
+
+                </label>
+
+            </div>
+
+            <!-- FICHIERS LOCAUX -->
+            <div id="localFields" class="media-panel">
+
+                <h3>📱 Fichiers de mon iPhone</h3>
+
+                <div class="field">
+
+                    <label for="imageFile">
+                        Image de l'affiche
+                    </label>
+
+                    <input
+                        type="file"
+                        id="imageFile"
+                        accept="image/*"
+                    >
+
+                    <small>
+                        Sélectionne une affiche depuis ton appareil.
+                    </small>
+
+                </div>
+
+                <div class="field">
+
+                    <label for="videoFile">
+                        Fichier vidéo
+                    </label>
+
+                    <input
+                        type="file"
+                        id="videoFile"
+                        accept="video/*"
+                    >
+
+                    <small>
+                        La vidéo locale n'est pas téléversée sur Internet.
+                        Pour la diffuser à tous les visiteurs, héberge-la
+                        sur un serveur.
+                    </small>
+
+                </div>
+
+            </div>
+
+            <!-- LIENS INTERNET -->
+            <div id="onlineFields" class="media-panel hidden">
+
+                <h3>🌐 Liens Internet</h3>
+
+                <div class="field">
+
+                    <label for="imageUrl">
+                        Lien de l'affiche
+                    </label>
+
+                    <input
+                        type="url"
+                        id="imageUrl"
+                        placeholder="https://exemple.com/affiche.jpg"
+                    >
+
+                </div>
+
+                <div class="field">
+
+                    <label for="videoUrl">
+                        Lien de la vidéo
+                    </label>
+
+                    <input
+                        type="url"
+                        id="videoUrl"
+                        placeholder="https://exemple.com/video.mp4"
+                    >
+
+                    <small>
+                        Utilise un lien direct vers une vidéo compatible,
+                        par exemple un fichier MP4 accessible en ligne.
+                    </small>
+
+                </div>
+
+            </div>
+
+            <!-- APERÇU -->
+            <div class="preview-area">
+
+                <h3>Aperçu de l'affiche</h3>
+
+                <div class="poster-preview">
+
+                    <img
+                        id="imagePreview"
+                        alt="Aperçu de l'affiche"
+                    >
+
+                    <span id="previewPlaceholder">🎬</span>
+
+                </div>
+
+                <p id="previewName">
+                    Ton titre apparaîtra ici
+                </p>
+
+            </div>
+
+            <!-- BOUTONS -->
+            <div class="form-actions">
+
+                <button
+                    type="submit"
+                    class="primary-button"
+                    id="saveButton"
+                >
+                    ＋ Ajouter au catalogue
+                </button>
+
+                <button
+                    type="button"
+                    class="secondary-button hidden"
+                    id="cancelEdit"
+                >
+                    Annuler la modification
+                </button>
+
+            </div>
+
+        </form>
+
+    </section>
+
+    <!-- CATALOGUE ADMINISTRATEUR -->
+    <section class="panel catalog-panel">
+
+        <div class="panel-heading">
+
+            <div>
+                <p class="eyebrow">CONTENUS ENREGISTRÉS</p>
+
+                <h2>Mon catalogue</h2>
+            </div>
+
+        </div>
+
+        <div class="search-row">
+
+            <input
+                type="search"
+                id="searchAdmin"
+                placeholder="Rechercher un titre..."
+            >
+
+            <select id="filterType">
+
+                <option value="Tous">Tous les contenus</option>
+                <option value="Film">Films</option>
+                <option value="Série">Séries</option>
+
+            </select>
+
+        </div>
+
+        <div id="filmsList" class="films-list"></div>
+
+        <p id="emptyMessage" class="empty-message hidden">
+            Aucun contenu trouvé.
+        </p>
+
+    </section>
+
+    <footer>
+        <p>© 2026 MOBILUS — Administration</p>
+    </footer>
+
+</main>
+
+<!-- CATALOGUE INITIAL -->
+<script src="films.js"></script>
+
+<!-- SUPABASE : CONSERVÉ POUR LA SUITE -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+
+<!-- APPLICATION ADMINISTRATIVE -->
+<script src="admin.js"></script>
+
+</body>
+</html>

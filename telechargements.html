@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#080808">
+    <meta name="description" content="Retrouvez vos téléchargements sur MOBILUS.">
+
+    <title>Téléchargements — MOBILUS</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --fond: #080808;
+            --carte: #151515;
+            --rouge: #e50914;
+            --texte: #ffffff;
+            --gris: #a0a0a0;
+        }
+
+        body {
+            background: var(--fond);
+            color: var(--texte);
+            font-family: Arial, Helvetica, sans-serif;
+            min-height: 100vh;
+            padding-bottom: 100px;
+        }
+
+        /* CHARGEMENT MOBILUS */
+
+        #mobilus-loading {
+            position: fixed;
+            inset: 0;
+            z-index: 99999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #080808;
+            opacity: 1;
+            visibility: visible;
+            transition: opacity .2s ease, visibility .2s ease;
+        }
+
+        #mobilus-loading.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .loading-circle {
+            width: 48px;
+            height: 48px;
+            border: 4px solid #333;
+            border-top-color: #ffd400;
+            border-radius: 50%;
+            animation: mobilusRotate .8s linear infinite;
+        }
+
+        @keyframes mobilusRotate {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* EN-TÊTE */
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 16px;
+            border-bottom: 1px solid #222;
+        }
+
+        .logo {
+            font-size: 25px;
+            font-weight: 900;
+            letter-spacing: 1px;
+            color: white;
+            text-decoration: none;
+        }
+
+        .logo span {
+            color: var(--rouge);
+        }
+
+        .sous-titre {
+            color: var(--gris);
+            font-size: 10px;
+            margin-top: 4px;
+            letter-spacing: 1.5px;
+        }
+
+        .bouton-profil {
+            width: 42px;
+            height: 42px;
+            border: none;
+            border-radius: 50%;
+            background: #242424;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        /* CONTENU */
+
+        main {
+            padding: 24px 16px;
+            max-width: 1100px;
+            margin: auto;
+        }
+
+        .entete-page {
+            margin-bottom: 25px;
+        }
+
+        .entete-page h1 {
+            font-size: 27px;
+            margin-bottom: 9px;
+        }
+
+        .entete-page p {
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--gris);
+        }
+
+        .ligne-titre {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .ligne-titre h2 {
+            font-size: 18px;
+        }
+
+        .compteur {
+            color: var(--gris);
+            font-size: 12px;
+        }
+
+        /* GRILLE DES FILMS */
+
+        .movie-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .movie-card {
+            min-width: 0;
+            overflow: hidden;
+            background: var(--carte);
+            border-radius: 12px;
+            border: 1px solid #252525;
+            cursor: pointer;
+            transition: transform .2s ease;
+        }
+
+        .movie-card:active {
+            transform: scale(.97);
+        }
+
+        .movie-poster {
+            width: 100%;
+            aspect-ratio: 2 / 3;
+            object-fit: cover;
+            display: block;
+            background: #222;
+        }
+
+        .movie-info {
+            padding: 11px;
+        }
+
+        .movie-info h3 {
+            font-size: 14px;
+            line-height: 1.4;
+            margin-bottom: 6px;
+            overflow-wrap: anywhere;
+        }
+
+        .movie-info p {
+            color: var(--gris);
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        /* BIBLIOTHÈQUE VIDE */
+
+        .message-vide {
+            text-align: center;
+            padding: 45px 18px;
+            border: 1px dashed #333;
+            border-radius: 14px;
+            background: #101010;
+        }
+
+        .message-vide .icone {
+            font-size: 42px;
+            margin-bottom: 15px;
+        }
+
+        .message-vide h2 {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .message-vide p {
+            color: var(--gris);
+            font-size: 13px;
+            line-height: 1.7;
+            margin-bottom: 20px;
+        }
+
+        .bouton-explorer {
+            display: inline-block;
+            background: var(--rouge);
+            color: white;
+            text-decoration: none;
+            padding: 12px 18px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        /* MENU INFÉRIEUR */
+
+        .nav-bas {
+            position: fixed;
+            z-index: 1000;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            background: rgba(10, 10, 10, .97);
+            border-top: 1px solid #292929;
+            padding: 9px 5px calc(9px + env(safe-area-inset-bottom));
+        }
+
+        .nav-item {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            color: #929292;
+            text-decoration: none;
+            font-size: 10px;
+            padding: 5px 2px;
+            transition: color .2s ease;
+        }
+
+        .nav-item svg {
+            width: 22px;
+            height: 22px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 1.8;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .nav-item.active {
+            color: var(--rouge);
+        }
+
+        @media (min-width: 600px) {
+            main {
+                padding: 35px 25px;
+            }
+
+            .movie-grid {
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+                gap: 20px;
+            }
+
+            .entete-page h1 {
+                font-size: 32px;
+            }
+
+            .nav-bas {
+                padding-left: max(5px, calc((100% - 600px) / 2));
+                padding-right: max(5px, calc((100% - 600px) / 2));
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ÉCRAN NOIR ET CERCLE JAUNE -->
+    <div id="mobilus-loading" class="hidden" aria-hidden="true">
+        <div class="loading-circle"></div>
+    </div>
+
+    <!-- EN-TÊTE -->
+    <header>
+        <div>
+            <a href="index.html" class="logo">
+                M<span>O</span>BILUS
+            </a>
+
+            <p class="sous-titre">
+                YOUR CINEMA, EVERYWHERE
+            </p>
+        </div>
+
+        <button
+            class="bouton-profil"
+            type="button"
+            onclick="window.location.href='profil.html'"
+            aria-label="Ouvrir le profil">
+            ♙
+        </button>
+    </header>
+
+    <!-- CONTENU PRINCIPAL -->
+    <main>
+
+        <section class="entete-page">
+            <h1>Mes téléchargements</h1>
+
+            <p>
+                Retrouvez ici les films que vous avez ajoutés à votre
+                espace de téléchargements.
+            </p>
+        </section>
+
+        <div class="ligne-titre">
+            <h2>Ma bibliothèque</h2>
+            <span class="compteur" id="downloadsCount">0 film</span>
+        </div>
+
+        <div id="downloadsGrid" class="movie-grid"></div>
+
+        <div id="emptyDownloads" class="message-vide" hidden>
+            <div class="icone">↓</div>
+
+            <h2>Aucun téléchargement</h2>
+
+            <p>
+                Votre bibliothèque est vide pour le moment.
+                Explorez le catalogue pour découvrir des films.
+            </p>
+
+            <a href="index.html" class="bouton-explorer">
+                Explorer les films
+            </a>
+        </div>
+
+    </main>
+
+    <!-- MENU INFÉRIEUR -->
+    <nav class="nav-bas" aria-label="Navigation principale">
+
+        <a href="index.html" class="nav-item" id="navAccueil">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="m3 10 9-7 9 7"></path>
+                <path d="M5 9v12h14V9"></path>
+                <path d="M9 21v-7h6v7"></path>
+            </svg>
+            <span>Accueil</span>
+        </a>
+
+        <a href="telechargements.html"
+           class="nav-item active"
+           id="navTelechargements"
+           aria-current="page">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <path d="m7 10 5 5 5-5"></path>
+                <path d="M12 15V3"></path>
+            </svg>
+            <span>Téléchargements</span>
+        </a>
+
+        <a href="recents.html" class="nav-item" id="navRecent">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="9"></circle>
+                <path d="M12 7v5l3 2"></path>
+            </svg>
+            <span>Récents</span>
+        </a>
+
+        <a href="profil.html" class="nav-item" id="navProfil">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="8" r="4"></circle>
+                <path d="M4 21a8 8 0 0 1 16 0"></path>
+            </svg>
+            <span>Profil</span>
+        </a>
+
+    </nav>
+
+    <!-- VÉRIFICATION DE CONNEXION -->
+    <script>
+        if (localStorage.getItem("mobilusConnecte") !== "oui") {
+            window.location.replace("connexion.html");
+        }
+    </script>
+
+    <!-- FICHIERS DU SITE -->
+    <script src="films.js"></script>
+    <script src="app.js"></script>
+
+    <!-- COMPTEUR DES TÉLÉCHARGEMENTS -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const grid = document.getElementById("downloadsGrid");
+            const empty = document.getElementById("emptyDownloads");
+            const count = document.getElementById("downloadsCount");
+
+            function actualiserEtat() {
+                if (!grid || !empty || !count) return;
+
+                const nombre = grid.querySelectorAll(".movie-card").length;
+
+                count.textContent =
+                    nombre + (nombre > 1 ? " films" : " film");
+
+                empty.hidden = nombre !== 0;
+                grid.hidden = nombre === 0;
+            }
+
+            actualiserEtat();
+
+            if (grid) {
+                const observer = new MutationObserver(actualiserEtat);
+
+                observer.observe(grid, {
+                    childList: true,
+                    subtree: true
+                });
+            }
+        });
+    </script>
+
+    <!-- CHARGEMENT DE 2 SECONDES À CHAQUE CLIC -->
+    <script>
+        (function () {
+            "use strict";
+
+            const loading = document.getElementById("mobilus-loading");
+
+            if (!loading) return;
+
+            const boutons = [
+                "navAccueil",
+                "navTelechargements",
+                "navRecent",
+                "navProfil"
+            ];
+
+            let navigationEnCours = false;
+
+            boutons.forEach(function (id) {
+                const bouton = document.getElementById(id);
+
+                if (!bouton) return;
+
+                bouton.addEventListener("click", function (event) {
+                    const destination = bouton.getAttribute("href");
+
+                    if (!destination) return;
+
+                    event.preventDefault();
+
+                    if (navigationEnCours) return;
+
+                    navigationEnCours = true;
+
+                    loading.classList.remove("hidden");
+                    loading.setAttribute("aria-hidden", "false");
+
+                    setTimeout(function () {
+                        window.location.href = destination;
+                    }, 2000);
+                });
+            });
+        })();
+    </script>
+
+</body>
+</html>
