@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#090909">
+<title>Abonnement - MOBILUS</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#090909;color:white;font-family:Arial,sans-serif;min-height:100vh;padding:25px 15px}
+.container{max-width:480px;margin:auto}
+.logo{text-align:center;margin:20px 0 30px}
+.logo img{width:105px;height:105px;object-fit:contain}
+.logo h1{font-size:27px;letter-spacing:4px}
+.logo span{color:#ed1c24}
+.logo p{color:#999;font-size:11px;margin-top:8px;letter-spacing:2px}
+h2{text-align:center;margin-bottom:10px}
+.intro{text-align:center;color:#aaa;font-size:14px;margin-bottom:25px;line-height:1.6}
+.card{background:#171717;border:1px solid #333;border-radius:15px;padding:22px;margin-bottom:18px}
+.card h3{margin-bottom:12px;font-size:20px}
+.card p{color:#bbb;font-size:14px;line-height:1.7}
+.premium{border:1px solid #ed1c24}
+.prix{font-size:30px;font-weight:bold;margin:15px 0}
+.prix small{font-size:13px;color:#aaa}
+ul{list-style:none;margin:15px 0}
+li{font-size:14px;margin:10px 0;color:#ddd}
+button{width:100%;padding:15px;border:none;border-radius:9px;background:#ed1c24;color:white;font-size:15px;font-weight:bold;cursor:pointer;margin-top:12px}
+.gratuit button{background:#333}
+button:disabled{opacity:.45;cursor:not-allowed}
+select,input{width:100%;padding:13px;background:#252525;color:white;border:1px solid #444;border-radius:8px;margin:8px 0 15px;font-size:14px}
+label{display:block;color:#ddd;font-size:13px;font-weight:bold;margin-top:12px}
+.message{display:block;background:#222;border-radius:9px;padding:15px;margin:18px 0;font-size:14px;line-height:1.6;overflow-wrap:anywhere}
+footer{text-align:center;color:#666;font-size:12px;margin-top:30px}
+.note{color:#999;font-size:12px;line-height:1.6;margin-top:12px}
+.coordonnees{background:#242424;border:1px solid #444;padding:15px;border-radius:10px;margin:12px 0;line-height:1.8;font-size:14px}
+.coordonnees strong{color:#fff}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="logo">
+<img src="mobilus.png" alt="Logo MOBILUS">
+<h1>M<span>O</span>BILUS</h1>
+<p>YOUR CINEMA, EVERYWHERE</p>
+</div>
+<h2>Choisis ton accès</h2>
+<p class="intro">
+Bienvenue sur MOBILUS ! Choisis la formule qui correspond à tes envies de cinéma.
+</p>
+<div class="message" id="message" role="status" aria-live="polite">
+Connexion à MOBILUS en cours...
+</div>
+<div class="card gratuit">
+<h3>Accès gratuit</h3>
+<div class="prix">0 $ <small>/ toujours</small></div>
+<ul>
+<li>✓ Sélection limitée de films</li>
+<li>✓ Séries gratuites</li>
+<li>✓ Accès au profil</li>
+<li>✓ Liste de favoris</li>
+</ul>
+<button id="boutonGratuit" type="button" disabled>
+Continuer gratuitement
+</button>
+</div>
+<div class="card premium">
+<p>ACCÈS COMPLET</p>
+<h3>⭐ MOBILUS PREMIUM</h3>
+<div class="prix">2 $ <small>/ tarif indicatif</small></div>
+<p>Équivalent indicatif : 5 250 FC.</p>
+<ul>
+<li>✓ Tous les films</li>
+<li>✓ Toutes les séries</li>
+<li>✓ Catalogue complet</li>
+<li>✓ Durée déterminée après validation du paiement</li>
+</ul>
+
+Choisir la devise :
+
+<select id="devise">
+<option value="CDF">Franc congolais (CDF)</option>
+<option value="USD">Dollar américain (USD)</option>
+</select>
+
+Méthode de paiement :
+
+<select id="methode">
+<option value="">Sélectionner un opérateur</option>
+<option value="M-Pesa">M-Pesa</option>
+<option value="Airtel Money">Airtel Money</option>
+<option value="Orange Money">Orange Money</option>
+<option value="AfriMoney">AfriMoney</option>
+</select>
+<div class="coordonnees">
+<strong>Informations de paiement</strong><br>
+Bénéficiaire : ZAWADI BANGOYA AGNÈS<br>
+Numéro : +243 990 631 468<br>
+Montant indicatif : 5 250 FC
+</div>
+
+Référence de transaction :
+
+<label for="reference">Référence de transaction :</label>
+
+<input
+    type="text"
+    id="reference"
+    placeholder="Entre la référence de ton paiement"
+    autocomplete="off"
+    maxlength="100"
+>
+
+<button id="boutonPremium" type="button" disabled>
+Envoyer ma demande de paiement
+</button>
+<p class="note">
+Après ton paiement, saisis la référence de transaction et envoie ta demande.
+L'administrateur vérifiera le paiement avant d'activer ton accès Premium.
+</p>
+</div>
+<footer>© 2026 MOBILUS — YOUR CINEMA, EVERYWHERE</footer>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = "https://uoxccezhznxmgggjupqd.supabase.co";
+const SUPABASE_KEY = "sb_publishable_-3OGf57zowok1GS8s0e9gQ_Qg2pVRmO";
+const message = document.getElementById("message");
+const boutonGratuit = document.getElementById("boutonGratuit");
+const boutonPremium = document.getElementById("boutonPremium");
+let supabase = null;
+let utilisateur = null;
+let traitementEnCours = false;
+function afficherMessage(texte) {
+    message.textContent = texte;
+}
+function activerBoutons() {
+    boutonGratuit.disabled = false;
+    boutonPremium.disabled = false;
+}
+function avecDelai(operation, duree = 12000) {
+    let minuterie;
+    return Promise.race([
+        operation,
+        new Promise((_, reject) => {
+            minuterie = setTimeout(() => {
+                reject(new Error(
+                    "Le serveur met trop de temps à répondre. Vérifie ta connexion Internet puis recharge la page."
+                ));
+            }, duree);
+        })
+    ]).finally(() => clearTimeout(minuterie));
+}
+async function verifierUtilisateur() {
+    try {
+        afficherMessage("Connexion à MOBILUS en cours...");
+        if (!window.supabase || !window.supabase.createClient) {
+            throw new Error(
+                "La bibliothèque Supabase n'a pas pu être chargée. Vérifie ta connexion Internet."
+            );
+        }
+        supabase = window.supabase.createClient(
+            SUPABASE_URL,
+            SUPABASE_KEY
+        );
+        const resultat = await avecDelai(
+            supabase.auth.getSession()
+        );
+        if (resultat.error) throw resultat.error;
+        const session = resultat.data.session;
+        if (!session) {
+            afficherMessage("Tu n'es pas connecté. Redirection vers la connexion...");
+            setTimeout(() => {
+                window.location.replace("connexion.html");
+            }, 1800);
+            return;
+        }
+        utilisateur = session.user;
+        afficherMessage("Vérification de ton profil...");
+        const resultatProfil = await avecDelai(
+            supabase
+                .from("profils")
+                .select("id,type_acces,statut_abonnement,date_fin_abonnement")
+                .eq("id", utilisateur.id)
+                .maybeSingle()
+        );
+        if (resultatProfil.error) throw resultatProfil.error;
+        const profil = resultatProfil.data;
+        if (!profil) {
+            afficherMessage("Profil introuvable. Redirection vers l'inscription...");
+            setTimeout(() => {
+                window.location.replace("inscription.html");
+            }, 1800);
+            return;
+        }
+        const premiumActif =
+            profil.type_acces === "premium" &&
+            profil.statut_abonnement === "actif" &&
+            profil.date_fin_abonnement &&
+            new Date(profil.date_fin_abonnement).getTime() > Date.now();
+        const gratuitActif =
+            profil.type_acces === "gratuit" &&
+            profil.statut_abonnement === "actif";
+        if (premiumActif || gratuitActif) {
+            afficherMessage("Ton accès MOBILUS est déjà actif. Ouverture...");
+            setTimeout(() => {
+                window.location.replace("index.html");
+            }, 1200);
+            return;
+        }
+        afficherMessage(
+            "Connecté avec " + (utilisateur.email || "ton compte") +
+            ". Choisis ton accès."
+        );
+        activerBoutons();
+    } catch (erreur) {
+        console.error("Erreur MOBILUS :", erreur);
+        afficherMessage(
+            "Impossible de terminer la connexion : " +
+            (erreur.message || "Erreur inconnue")
+        );
+    }
+}
+async function choisirGratuit() {
+    if (!utilisateur || traitementEnCours) {
+        afficherMessage("La connexion n'est pas encore prête.");
+        return;
+    }
+    traitementEnCours = true;
+    boutonGratuit.disabled = true;
+    boutonPremium.disabled = true;
+    afficherMessage("Activation de ton accès gratuit...");
+    try {
+        const resultat = await avecDelai(
+            supabase
+                .from("profils")
+                .update({
+                    type_acces: "gratuit",
+                    statut_abonnement: "actif",
+                    date_fin_abonnement: null,
+                    updated_at: new Date().toISOString()
+                })
+                .eq("id", utilisateur.id)
+                .select("id")
+        );
+        if (resultat.error) throw resultat.error;
+        if (!resultat.data || resultat.data.length === 0) {
+            throw new Error(
+                "Aucun profil modifié. Vérifie les autorisations de ta table profils."
+            );
+        }
+        localStorage.setItem("mobilusConnecte", "oui");
+        localStorage.setItem("mobilusEmail", utilisateur.email || "");
+        afficherMessage("Accès gratuit activé ! Ouverture de MOBILUS...");
+        setTimeout(() => {
+            window.location.replace("index.html");
+        }, 1200);
+    } catch (erreur) {
+        afficherMessage("Impossible d'activer l'accès gratuit : " + erreur.message);
+        traitementEnCours = false;
+        activerBoutons();
+    }
+}
+async function choisirPremium() {
+    if (!utilisateur || traitementEnCours) {
+        afficherMessage("La connexion n'est pas encore prête.");
+        return;
+    }
+    const methode = document.getElementById("methode").value;
+    const devise = document.getElementById("devise").value;
+    const reference = document.getElementById("reference").value.trim();
+    if (!methode) {
+        afficherMessage("Choisis ton opérateur de paiement.");
+        return;
+    }
+    if (reference.length < 4) {
+        afficherMessage("Entre une référence de transaction valide.");
+        return;
+    }
+    if (!confirm("Confirmer l'envoi de ta demande de paiement MOBILUS ?")) {
+        return;
+    }
+    traitementEnCours = true;
+    boutonGratuit.disabled = true;
+    boutonPremium.disabled = true;
+    afficherMessage("Enregistrement de ta demande...");
+    try {
+        const resultatSession = await avecDelai(
+            supabase.auth.getSession()
+        );
+        if (resultatSession.error) throw resultatSession.error;
+        if (!resultatSession.data.session) {
+            throw new Error("Ta session a expiré. Reconnecte-toi.");
+        }
+        const resultat = await avecDelai(
+            supabase
+                .from("demandes_paiement")
+                .insert({
+                    user_id: utilisateur.id,
+                    email: utilisateur.email,
+                    operateur: methode,
+                    numero_destination: "+243990631468",
+                    beneficiaire: "ZAWADI BANGOYA AGNES",
+                    montant_cdf: 5250,
+                    reference_transaction: reference
+                })
+        );
+        if (resultat.error) throw resultat.error;
+        afficherMessage(
+            "Ta demande a été envoyée avec succès. " +
+            "Opérateur : " + methode + ". " +
+            "Devise sélectionnée : " + devise + ". " +
+            "Référence : " + reference + ". " +
+            "Ton paiement doit être vérifié par l'administrateur. " +
+            "Ton accès Premium n'est pas encore activé."
+        );
+        document.getElementById("reference").value = "";
+    } catch (erreur) {
+        afficherMessage("Erreur : " + erreur.message);
+    } finally {
+        traitementEnCours = false;
+        activerBoutons();
+    }
+}
+boutonGratuit.addEventListener("click", choisirGratuit);
+boutonPremium.addEventListener("click", choisirPremium);
+verifierUtilisateur();
+</script>
+<!-- TEST : VÉRIFIER SI JAVASCRIPT FONCTIONNE DANS KODER -->
+<script>
+document.getElementById("message").textContent =
+"TEST : JavaScript fonctionne dans Koder.";
+</script>
+</body>
+</html>

@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#080808">
+    <title>Connexion | MOBILUS</title>
+    <link rel="stylesheet" href="connexion.css">
+</head>
+<body>
+<main class="connexion-container">
+    <a href="index.html" class="logo">
+        <img src="mobilus.png" alt="Logo MOBILUS"
+             onerror="this.style.display='none'">
+        <span class="logo-nom">MOBILUS</span>
+    </a>
+    <section class="connexion-box">
+        <h1>Bienvenue sur MOBILUS</h1>
+        <p class="sous-titre">
+            Connecte-toi pour retrouver tes films et séries préférés.
+        </p>
+        <form id="formConnexion">
+            <div id="etapeEmail">
+                <label for="email">Adresse e-mail</label>
+                <input
+                    type="email"
+                    id="email"
+                    placeholder="exemple@email.com"
+                    autocomplete="email"
+                    required
+                >
+                <button type="submit" id="boutonConnexion">
+                    Recevoir mon code
+                </button>
+            </div>
+            <div id="etapeCode" hidden>
+                <label for="codeOTP">Code de vérification</label>
+                <input
+                    type="text"
+                    id="codeOTP"
+                    placeholder="Entre ton code à 6 chiffres"
+                    inputmode="numeric"
+                    autocomplete="one-time-code"
+                    maxlength="6"
+                    pattern="[0-9]{6}"
+                >
+                <button type="button" id="boutonVerifier">
+                    Vérifier mon code
+                </button>
+                <button type="button" id="boutonRetour">
+                    Changer d'adresse e-mail
+                </button>
+                <button type="button" id="boutonRenvoyer">
+                    Renvoyer le code
+                </button>
+            </div>
+        </form>
+        <p id="message" role="status" aria-live="polite"></p>
+        <p class="conditions">
+            En te connectant, tu acceptes les conditions d'utilisation
+            de MOBILUS.
+        </p>
+    </section>
+    <footer>
+        © 2026 MOBILUS — YOUR CINEMA, EVERYWHERE
+    </footer>
+</main>
+<script type="module">
+import { createClient }
+from "https://esm.sh/@supabase/supabase-js@2";
+const SUPABASE_URL =
+"https://uoxccezhznxmgggjupqd.supabase.co";
+const SUPABASE_KEY =
+"sb_publishable_-3OGf57zowok1GS8s0e9gQ_Qg2pVRmO";
+const supabase = createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+);
+const formulaire = document.getElementById("formConnexion");
+const champEmail = document.getElementById("email");
+const champCode = document.getElementById("codeOTP");
+const etapeEmail = document.getElementById("etapeEmail");
+const etapeCode = document.getElementById("etapeCode");
+const boutonConnexion = document.getElementById("boutonConnexion");
+const boutonVerifier = document.getElementById("boutonVerifier");
+const boutonRetour = document.getElementById("boutonRetour");
+const boutonRenvoyer = document.getElementById("boutonRenvoyer");
+const message = document.getElementById("message");
+let emailUtilisateur = "";
+let verificationEnCours = false;
+let redirectionEnCours = false;
+function afficherMessage(texte, erreur = false) {
+    message.textContent = texte;
+    message.className = erreur ? "erreur" : "succes";
+}
+function afficherErreurDetaillee(erreur) {
+    console.error("Erreur Supabase :", erreur);
+    afficherMessage(
+        erreur.message || "Une erreur est survenue.",
+        true
+    );
+}
+// VÉRIFIER LE PROFIL ET CHOISIR LA DESTINATION
+async function redirigerApresConnexion(utilisateur) {
+    if (redirectionEnCours) return;
+    redirectionEnCours = true;
+    afficherMessage("Vérification de ton compte MOBILUS...");
+    try {
+        const { data: profil, error } = await supabase
+            .from("profils")
+            .select("*")
+            .eq("id", utilisateur.id)
+            .maybeSingle();
+        if (error) throw error;
+        localStorage.setItem("mobilusConnecte", "oui");
+        localStorage.setItem(
+            "mobilusEmail",
+            utilisateur.email || ""
+        );
+        // CAS 1 : AUCUN PROFIL
+        if (!profil) {
+            afficherMessage("Terminons ton inscription...");
+            window.location.replace("inscription.html");
+            return;
+        }
+        // CAS 2 : PROFIL INCOMPLET
+        const profilComplet =
+            profil.nom &&
+            profil.prenom &&
+            profil.telephone &&
+            profil.pays &&
+            profil.ville;
+        if (!profilComplet) {
+            afficherMessage("Ton inscription doit être terminée...");
+            window.location.replace("inscription.html");
+            return;
+        }
+        // CAS 3 : PROFIL COMPLET, MAIS AUCUN ACCÈS CHOISI
+        const accesChoisi =
+            profil.type_acces ||
+            profil.statut_abonnement;
+        if (!accesChoisi) {
+            afficherMessage("Choisis ton mode d'accès à MOBILUS...");
+            window.location.replace("abonnement.html");
+            return;
+        }
+        // CAS 4 : COMPTE DÉJÀ CONFIGURÉ
+        afficherMessage("Connexion réussie ! Bienvenue sur MOBILUS.");
+        window.location.replace("index.html");
+    } catch (erreur) {
+        console.error("Erreur de vérification du profil :", erreur);
+        afficherMessage(
+            "Impossible de vérifier ton profil. Vérifie ta connexion et réessaie.",
+            true
+        );
+        redirectionEnCours = false;
+    }
+}
+// ENVOYER LE CODE
+async function envoyerCode() {
+    const email = champEmail.value.trim().toLowerCase();
+    if (!email) {
+        afficherMessage("Entre une adresse e-mail valide.", true);
+        return;
+    }
+    emailUtilisateur = email;
+    boutonConnexion.disabled = true;
+    boutonConnexion.textContent = "Envoi en cours...";
+    afficherMessage("Envoi du code de vérification...");
+    try {
+        const { error } = await supabase.auth.signInWithOtp({
+            email: emailUtilisateur,
+            options: {
+                shouldCreateUser: true
+            }
+        });
+        if (error) throw error;
+        etapeEmail.hidden = true;
+        etapeCode.hidden = false;
+        afficherMessage(
+            "Un code a été envoyé à " + emailUtilisateur
+        );
+        champCode.focus();
+    } catch (erreur) {
+        afficherErreurDetaillee(erreur);
+    } finally {
+        boutonConnexion.disabled = false;
+        boutonConnexion.textContent = "Recevoir mon code";
+    }
+}
+// VÉRIFIER LE CODE
+async function verifierCode() {
+    if (verificationEnCours) return;
+    const code = champCode.value.trim();
+    if (!/^[0-9]{6}$/.test(code)) {
+        afficherMessage("Entre un code valide de 6 chiffres.", true);
+        return;
+    }
+    verificationEnCours = true;
+    boutonVerifier.disabled = true;
+    boutonVerifier.textContent = "Vérification...";
+    try {
+        const { data, error } = await supabase.auth.verifyOtp({
+            email: emailUtilisateur,
+            token: code,
+            type: "email"
+        });
+        if (error) throw error;
+        if (!data.user) {
+            throw new Error("Utilisateur introuvable.");
+        }
+        await redirigerApresConnexion(data.user);
+    } catch (erreur) {
+        afficherErreurDetaillee(erreur);
+    } finally {
+        verificationEnCours = false;
+        boutonVerifier.disabled = false;
+        boutonVerifier.textContent = "Vérifier mon code";
+    }
+}
+// CHANGER D'ADRESSE
+boutonRetour.addEventListener("click", function () {
+    etapeCode.hidden = true;
+    etapeEmail.hidden = false;
+    champCode.value = "";
+    afficherMessage("");
+});
+// RENVOYER LE CODE
+boutonRenvoyer.addEventListener("click", async function () {
+    boutonRenvoyer.disabled = true;
+    boutonRenvoyer.textContent = "Envoi...";
+    try {
+        const { error } = await supabase.auth.signInWithOtp({
+            email: emailUtilisateur,
+            options: {
+                shouldCreateUser: true
+            }
+        });
+        if (error) throw error;
+        afficherMessage("Un nouveau code a été envoyé.");
+    } catch (erreur) {
+        afficherErreurDetaillee(erreur);
+    } finally {
+        boutonRenvoyer.disabled = false;
+        boutonRenvoyer.textContent = "Renvoyer le code";
+    }
+});
+// ÉVÉNEMENTS
+formulaire.addEventListener("submit", function(event) {
+    event.preventDefault();
+    envoyerCode();
+});
+boutonVerifier.addEventListener("click", verifierCode);
+champCode.addEventListener("input", function() {
+    champCode.value = champCode.value
+        .replace(/[^0-9]/g, "")
+        .slice(0, 6);
+});
+// RESTAURER UNE SESSION EXISTANTE
+async function verifierSession() {
+    try {
+        const { data, error } = await supabase.auth.getSession();
+        if (error) throw error;
+        if (data.session) {
+            await redirigerApresConnexion(data.session.user);
+        }
+    } catch (erreur) {
+        console.error("Erreur de session :", erreur);
+    }
+}
+verifierSession();
+</script>
+</body>
+</html>

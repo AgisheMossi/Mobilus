@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#080808">
+    <title>Inscription — MOBILUS</title>
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    body {
+        min-height: 100vh;
+        background: #080808;
+        color: #fff;
+        font-family: Arial, Helvetica, sans-serif;
+        padding: 30px 16px;
+    }
+    .conteneur {
+        width: 100%;
+        max-width: 520px;
+        margin: auto;
+    }
+    .logo {
+        text-align: center;
+        margin-bottom: 28px;
+    }
+    .logo h1 {
+        font-size: 35px;
+        font-weight: 900;
+        letter-spacing: 2px;
+    }
+    .logo span {
+        color: #e50914;
+    }
+    .logo p {
+        color: #999;
+        font-size: 10px;
+        letter-spacing: 2px;
+        margin-top: 6px;
+    }
+    .carte {
+        background: #151515;
+        border: 1px solid #292929;
+        border-radius: 16px;
+        padding: 25px 20px;
+    }
+    h2 {
+        font-size: 23px;
+        margin-bottom: 10px;
+    }
+    .description {
+        color: #aaa;
+        font-size: 14px;
+        line-height: 1.6;
+        margin-bottom: 24px;
+    }
+    .groupe {
+        margin-bottom: 17px;
+    }
+    label {
+        display: block;
+        font-size: 13px;
+        margin-bottom: 8px;
+    }
+    input, select {
+        width: 100%;
+        min-height: 48px;
+        padding: 12px;
+        border: 1px solid #383838;
+        border-radius: 8px;
+        background: #090909;
+        color: white;
+        font-size: 16px;
+        outline: none;
+    }
+    input:focus, select:focus {
+        border-color: #e50914;
+    }
+    select option {
+        background: #151515;
+        color: white;
+    }
+    .ligne {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+    button {
+        width: 100%;
+        min-height: 50px;
+        border: none;
+        border-radius: 9px;
+        background: #e50914;
+        color: white;
+        font-size: 15px;
+        font-weight: bold;
+        cursor: pointer;
+        margin-top: 10px;
+    }
+    button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    #message {
+        display: none;
+        padding: 12px;
+        margin-top: 17px;
+        border-radius: 8px;
+        font-size: 13px;
+        line-height: 1.5;
+    }
+    #message.succes {
+        display: block;
+        background: #102417;
+        color: #8ee6a0;
+    }
+    #message.erreur {
+        display: block;
+        background: #301313;
+        color: #ff9292;
+    }
+    .note {
+        color: #888;
+        font-size: 12px;
+        line-height: 1.6;
+        margin-top: 17px;
+        text-align: center;
+    }
+    @media (max-width: 380px) {
+        .ligne {
+            grid-template-columns: 1fr;
+            gap: 0;
+        }
+        .carte {
+            padding: 22px 16px;
+        }
+    }
+</style>
+</head>
+<body>
+<main class="conteneur">
+<div class="logo">
+    <h1>M<span>O</span>BILUS</h1>
+    <p>YOUR CINEMA, EVERYWHERE</p>
+</div>
+<section class="carte">
+    <h2>Complète ton inscription</h2>
+    <p class="description">
+        Quelques informations pour personnaliser
+        ton expérience sur MOBILUS.
+    </p>
+    <form id="formInscription">
+        <div class="ligne">
+            <div class="groupe">
+                <label for="nom">Nom</label>
+                <input
+                    type="text"
+                    id="nom"
+                    autocomplete="family-name"
+                    required>
+            </div>
+            <div class="groupe">
+                <label for="postnom">Postnom</label>
+                <input
+                    type="text"
+                    id="postnom"
+                    required>
+            </div>
+        </div>
+        <div class="groupe">
+            <label for="prenom">Prénom</label>
+            <input
+                type="text"
+                id="prenom"
+                autocomplete="given-name"
+                required>
+        </div>
+        <div class="groupe">
+            <label for="sexe">Sexe</label>
+            <select id="sexe" required>
+                <option value="">Choisir</option>
+                <option value="Masculin">Masculin</option>
+                <option value="Féminin">Féminin</option>
+                <option value="Autre">Autre</option>
+                <option value="Non précisé">Ne pas préciser</option>
+            </select>
+        </div>
+        <div class="groupe">
+            <label for="dateNaissance">Date de naissance</label>
+            <input
+                type="date"
+                id="dateNaissance"
+                required>
+        </div>
+        <div class="groupe">
+            <label for="telephone">Numéro de téléphone</label>
+            <input
+                type="tel"
+                id="telephone"
+                placeholder="+243..."
+                autocomplete="tel"
+                required>
+        </div>
+        <div class="groupe">
+            <label for="pays">Pays</label>
+            <input
+                type="text"
+                id="pays"
+                placeholder="Exemple : RDC"
+                autocomplete="country-name"
+                required>
+        </div>
+        <div class="groupe">
+            <label for="ville">Ville</label>
+            <input
+                type="text"
+                id="ville"
+                placeholder="Exemple : Bukavu"
+                autocomplete="address-level2"
+                required>
+        </div>
+        <button type="submit" id="boutonValider">
+            Terminer mon inscription
+        </button>
+    </form>
+    <p id="message" role="status" aria-live="polite"></p>
+    <p class="note">
+        Tes informations seront utilisées pour gérer
+        ton profil MOBILUS.
+    </p>
+</section>
+</main>
+<script type="module">
+import { createClient }
+    from "https://esm.sh/@supabase/supabase-js@2";
+const SUPABASE_URL =
+    "https://uoxccezhznxmgggjupqd.supabase.co";
+const SUPABASE_KEY =
+    "sb_publishable_-3OGf57zowok1GS8s0e9gQ_Qg2pVRmO";
+const supabase = createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+);
+const formulaire =
+    document.getElementById("formInscription");
+const bouton =
+    document.getElementById("boutonValider");
+const message =
+    document.getElementById("message");
+function afficherMessage(texte, type) {
+    message.textContent = texte;
+    message.className = type;
+}
+function valeur(id) {
+    return document.getElementById(id).value.trim();
+}
+// Vérifier que l'utilisateur possède une session.
+async function verifierSession() {
+    const { data, error } =
+        await supabase.auth.getSession();
+    if (error) throw error;
+    if (!data.session) {
+        window.location.replace("connexion.html");
+        return null;
+    }
+    return data.session.user;
+}
+// Charger la date maximale de naissance.
+const dateInput =
+    document.getElementById("dateNaissance");
+dateInput.max = new Date().toISOString().split("T")[0];
+// Enregistrer le profil.
+formulaire.addEventListener("submit", async function(event) {
+    event.preventDefault();
+    bouton.disabled = true;
+    bouton.textContent = "Enregistrement...";
+    try {
+        const utilisateur = await verifierSession();
+        if (!utilisateur) return;
+        const donnees = {
+            id: utilisateur.id,
+            nom: valeur("nom"),
+            postnom: valeur("postnom"),
+            prenom: valeur("prenom"),
+            sexe: valeur("sexe"),
+            date_naissance: valeur("dateNaissance"),
+            telephone: valeur("telephone"),
+            pays: valeur("pays"),
+            ville: valeur("ville"),
+            updated_at: new Date().toISOString()
+        };
+        if (
+            new Date(donnees.date_naissance) >
+            new Date(new Date().toISOString().split("T")[0])
+        ) {
+            throw new Error(
+                "La date de naissance ne peut pas être dans le futur."
+            );
+        }
+        const { error } = await supabase
+            .from("profils")
+            .upsert(donnees, {
+                onConflict: "id"
+            });
+        if (error) throw error;
+        localStorage.setItem("mobilusConnecte", "oui");
+        localStorage.setItem(
+            "mobilusEmail",
+            utilisateur.email || ""
+        );
+        afficherMessage(
+            "Inscription terminée ! Redirection...",
+            "succes"
+        );
+        setTimeout(function() {
+            window.location.replace("abonnement.html");
+        }, 1200);
+    } catch (erreur) {
+        console.error("Erreur inscription :", erreur);
+        afficherMessage(
+            erreur.message || "Impossible d'enregistrer ton profil.",
+            "erreur"
+        );
+    } finally {
+        bouton.disabled = false;
+        bouton.textContent = "Terminer mon inscription";
+    }
+});
+// Vérifier la session dès l'ouverture.
+verifierSession().catch(function(erreur) {
+    console.error(erreur);
+    afficherMessage(
+        "Impossible de vérifier ta connexion. Réessaie.",
+        "erreur"
+    );
+});
+</script>
+</body>
+</html>

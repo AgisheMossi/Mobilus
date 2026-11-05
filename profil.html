@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#080808">
+    <title>Mon profil — MOBILUS</title>
+<style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    :root {
+        --fond:#080808;
+        --carte:#141414;
+        --rouge:#e50914;
+        --rouge-clair:#ff333d;
+        --texte:#fff;
+        --gris:#a0a0a0;
+        --bordure:#292929;
+        --vert:#37d67a;
+    }
+    body {
+        background:radial-gradient(ellipse at top,rgba(229,9,20,.09),transparent 48%),var(--fond);
+        color:var(--texte);
+        font-family:Arial,Helvetica,sans-serif;
+        min-height:100vh;
+        padding-bottom:120px;
+    }
+    button,a { -webkit-tap-highlight-color:transparent; }
+    button { font-family:inherit; cursor:pointer; }
+    [hidden] { display:none!important; }
+    #mobilus-loading {
+        position:fixed;
+        inset:0;
+        z-index:99999;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        background:#080808;
+        opacity:1;
+        visibility:visible;
+        transition:opacity .2s,visibility .2s;
+    }
+    #mobilus-loading.hidden {
+        opacity:0;
+        visibility:hidden;
+        pointer-events:none;
+    }
+    .loading-circle {
+        width:48px;
+        height:48px;
+        border:4px solid #333;
+        border-top-color:#ffd400;
+        border-radius:50%;
+        animation:rotation .8s linear infinite;
+    }
+    @keyframes rotation { to { transform:rotate(360deg); } }
+    header {
+        position:sticky;
+        top:0;
+        z-index:900;
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:12px;
+        padding:17px 18px;
+        background:rgba(8,8,8,.96);
+        border-bottom:1px solid #222;
+        backdrop-filter:blur(15px);
+    }
+    .logo {
+        color:white;
+        text-decoration:none;
+        font-size:25px;
+        font-weight:900;
+        letter-spacing:1px;
+    }
+    .logo span { color:var(--rouge); }
+    .sous-titre {
+        color:var(--gris);
+        font-size:9px;
+        margin-top:4px;
+        letter-spacing:1.5px;
+    }
+    .bouton-header {
+        display:flex;
+        align-items:center;
+        gap:7px;
+        min-height:42px;
+        padding:0 13px;
+        border:1px solid #3b2525;
+        border-radius:12px;
+        background:#171111;
+        color:white;
+        text-decoration:none;
+        font-size:12px;
+        font-weight:bold;
+    }
+    .bouton-header span { color:var(--rouge-clair); font-size:17px; }
+    main {
+        width:100%;
+        max-width:900px;
+        margin:auto;
+        padding:25px 16px;
+    }
+    .titre-page { margin-bottom:22px; }
+    .surtitre {
+        color:var(--rouge-clair);
+        font-size:11px;
+        font-weight:bold;
+        letter-spacing:2px;
+        margin-bottom:10px;
+    }
+    .titre-page h1 { font-size:29px; margin-bottom:10px; }
+    .titre-page p {
+        color:var(--gris);
+        font-size:14px;
+        line-height:1.7;
+    }
+    .carte-profil {
+        background:radial-gradient(circle at 50% 0%,rgba(229,9,20,.15),transparent 50%),linear-gradient(145deg,#191919,#0e0e0e);
+        border:1px solid #333;
+        border-radius:22px;
+        padding:28px 18px;
+        text-align:center;
+        margin-bottom:22px;
+    }
+    .etiquette-compte {
+        display:inline-flex;
+        align-items:center;
+        gap:7px;
+        padding:7px 12px;
+        background:rgba(55,214,122,.09);
+        border:1px solid rgba(55,214,122,.25);
+        border-radius:30px;
+        color:#65e99a;
+        font-size:11px;
+        font-weight:bold;
+        margin-bottom:23px;
+    }
+    .point-actif {
+        width:7px;
+        height:7px;
+        background:var(--vert);
+        border-radius:50%;
+    }
+    .avatar {
+        width:105px;
+        height:105px;
+        margin:0 auto 20px;
+        border-radius:25px;
+        background:linear-gradient(145deg,#ff303a,#a9000a);
+        border:2px solid #ff5159;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-size:44px;
+        font-weight:900;
+        box-shadow:0 8px 35px rgba(229,9,20,.23);
+    }
+    .carte-profil h2 { font-size:23px; margin-bottom:8px; overflow-wrap:anywhere; }
+    .email-profil {
+        color:var(--gris);
+        font-size:13px;
+        line-height:1.6;
+        overflow-wrap:anywhere;
+        margin-bottom:22px;
+    }
+    .badge-mobilus {
+        display:inline-flex;
+        gap:8px;
+        padding:10px 15px;
+        background:rgba(229,9,20,.11);
+        border:1px solid rgba(229,9,20,.4);
+        border-radius:30px;
+        color:#ff626a;
+        font-size:12px;
+        font-weight:bold;
+    }
+    .titre-section {
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:10px;
+        margin:28px 0 15px;
+    }
+    .titre-section h2 { font-size:18px; }
+    .titre-section span { color:var(--gris); font-size:11px; }
+    .grille-statistiques {
+        display:grid;
+        grid-template-columns:repeat(2,minmax(0,1fr));
+        gap:12px;
+        margin-bottom:25px;
+    }
+    .statistique {
+        display:flex;
+        align-items:center;
+        gap:12px;
+        padding:17px 12px;
+        background:var(--carte);
+        border:1px solid var(--bordure);
+        border-radius:16px;
+        min-width:0;
+    }
+    .stat-icone {
+        width:43px;
+        height:43px;
+        flex-shrink:0;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        border-radius:12px;
+        background:rgba(229,9,20,.13);
+        color:var(--rouge-clair);
+        font-size:22px;
+    }
+    .stat-info { min-width:0; }
+    .stat-info small {
+        display:block;
+        color:var(--gris);
+        font-size:10px;
+        margin-bottom:5px;
+        text-transform:uppercase;
+        font-weight:bold;
+    }
+    .stat-info strong { font-size:17px; overflow-wrap:anywhere; }
+    .stat-vert { color:var(--vert); }
+    .section-informations {
+        background:var(--carte);
+        border:1px solid var(--bordure);
+        border-radius:17px;
+        padding:20px 16px;
+        margin-bottom:20px;
+    }
+    .entete-section {
+        display:flex;
+        align-items:center;
+        gap:11px;
+        margin-bottom:18px;
+    }
+    .icone-section {
+        width:39px;
+        height:39px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        background:rgba(229,9,20,.12);
+        color:var(--rouge-clair);
+        border-radius:11px;
+        font-size:20px;
+    }
+    .entete-section h2 { font-size:17px; }
+    .entete-section p { color:var(--gris); font-size:11px; margin-top:4px; }
+    .information {
+        display:flex;
+        justify-content:space-between;
+        gap:15px;
+        padding:15px 0;
+        border-bottom:1px solid #292929;
+    }
+    .information:last-child { border-bottom:none; padding-bottom:0; }
+    .information .label { color:var(--gris); font-size:12px; }
+    .information .valeur {
+        max-width:60%;
+        font-size:13px;
+        text-align:right;
+        overflow-wrap:anywhere;
+    }
+    .bouton-principal {
+        width:100%;
+        min-height:48px;
+        padding:13px;
+        border:0;
+        border-radius:12px;
+        background:var(--rouge);
+        color:white;
+        font-size:14px;
+        font-weight:bold;
+        margin-top:15px;
+    }
+    .bouton-secondaire {
+        width:100%;
+        min-height:46px;
+        padding:12px;
+        border:1px solid #444;
+        border-radius:12px;
+        background:#202020;
+        color:white;
+        font-size:13px;
+        margin-top:10px;
+    }
+    .formulaire {
+        background:var(--carte);
+        border:1px solid var(--bordure);
+        border-radius:17px;
+        padding:20px 16px;
+        margin-bottom:20px;
+    }
+    .formulaire h2 { font-size:18px; margin-bottom:8px; }
+    .formulaire > p { color:var(--gris); font-size:12px; line-height:1.6; margin-bottom:18px; }
+    .champ { margin-bottom:15px; }
+    .champ label {
+        display:block;
+        color:#ddd;
+        font-size:12px;
+        font-weight:bold;
+        margin-bottom:8px;
+    }
+    .champ input,.champ select {
+        width:100%;
+        min-height:47px;
+        padding:12px;
+        border:1px solid #383838;
+        border-radius:10px;
+        background:#202020;
+        color:white;
+        font-size:14px;
+        outline:none;
+    }
+    .champ input:focus,.champ select:focus { border-color:var(--rouge); }
+    .champ select option { background:#202020; }
+    .options {
+        background:var(--carte);
+        border:1px solid var(--bordure);
+        border-radius:17px;
+        overflow:hidden;
+        margin-bottom:22px;
+    }
+    .option {
+        display:flex;
+        align-items:center;
+        gap:13px;
+        padding:17px 15px;
+        border-bottom:1px solid #292929;
+        color:white;
+        text-decoration:none;
+    }
+    .option:last-child { border-bottom:none; }
+    .option-icone {
+        width:43px;
+        height:43px;
+        flex-shrink:0;
+        border-radius:12px;
+        background:#252020;
+        border:1px solid #382626;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        color:#ff555d;
+        font-size:22px;
+    }
+    .option-texte { flex:1; min-width:0; }
+    .option-texte strong { display:block; font-size:14px; margin-bottom:5px; }
+    .option-texte small { color:var(--gris); font-size:12px; line-height:1.5; }
+    .fleche { color:#777; font-size:23px; }
+    .bouton-deconnexion,.bouton-suppression {
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        gap:10px;
+        width:100%;
+        min-height:56px;
+        padding:15px;
+        border:1px solid #652326;
+        border-radius:13px;
+        background:rgba(229,9,20,.10);
+        color:#ff626a;
+        font-size:15px;
+        font-weight:bold;
+        margin-bottom:12px;
+    }
+    .bouton-suppression {
+        background:#260c0d;
+        border-color:#8b2026;
+    }
+    button:disabled { opacity:.55; cursor:not-allowed; }
+    .avertissement {
+        margin-top:20px;
+        text-align:center;
+        color:#777;
+        font-size:11px;
+        line-height:1.8;
+    }
+    .avertissement strong { color:#bbb; }
+    .message {
+        font-size:12px;
+        line-height:1.6;
+        margin-top:12px;
+        color:#65e99a;
+    }
+    .nav-bas {
+        position:fixed;
+        z-index:1000;
+        bottom:0;
+        left:0;
+        width:100%;
+        display:grid;
+        grid-template-columns:repeat(4,minmax(0,1fr));
+        background:rgba(10,10,10,.97);
+        border-top:1px solid #292929;
+        padding:9px 5px calc(9px + env(safe-area-inset-bottom));
+        backdrop-filter:blur(15px);
+    }
+    .nav-item {
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+        gap:5px;
+        padding:7px 2px;
+        color:#929292;
+        text-decoration:none;
+        font-size:10px;
+        border-radius:12px;
+        min-width:0;
+    }
+    .nav-item svg {
+        width:22px;
+        height:22px;
+        fill:none;
+        stroke:currentColor;
+        stroke-width:1.8;
+        stroke-linecap:round;
+        stroke-linejoin:round;
+    }
+    .nav-item.active {
+        color:var(--rouge-clair);
+        background:rgba(229,9,20,.10);
+    }
+    @media(min-width:600px) {
+        main { padding:35px 25px; }
+        .carte-profil { padding:35px; }
+        .statistique { padding:22px; }
+        .titre-page h1 { font-size:34px; }
+        .nav-bas {
+            padding-left:max(5px,calc((100% - 600px)/2));
+            padding-right:max(5px,calc((100% - 600px)/2));
+        }
+    }
+    @media(max-width:360px) {
+        .statistique { flex-direction:column; align-items:flex-start; }
+        .stat-info strong { font-size:15px; }
+        .titre-page h1 { font-size:26px; }
+    }
+
+    /* ABONNEMENT ET HISTORIQUE DES PAIEMENTS */
+    .bloc-abonnement,.bloc-paiements{background:var(--carte);border:1px solid var(--bordure);border-radius:17px;padding:20px 16px;margin:20px 0}
+    .resume-acces{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:15px}
+    .resume-item{background:#1b1b1b;border:1px solid #303030;border-radius:12px;padding:13px;min-width:0}
+    .resume-item small{display:block;color:var(--gris);font-size:10px;text-transform:uppercase;font-weight:bold;margin-bottom:6px}
+    .resume-item strong{font-size:14px;overflow-wrap:anywhere}
+    .badge-statut{display:inline-block;padding:6px 10px;border-radius:20px;background:#252525;border:1px solid #444;font-size:11px;font-weight:bold}
+    .liste-paiements{display:grid;gap:12px;margin-top:14px}
+    .paiement-profil{background:#1b1b1b;border:1px solid #303030;border-radius:12px;padding:15px;overflow-wrap:anywhere}
+    .paiement-profil h3{font-size:15px;margin-bottom:9px}
+    .paiement-profil p{font-size:12px;color:#c5c5c5;line-height:1.7}
+    .paiement-profil strong{color:#fff}
+    .message-donnees{font-size:13px;color:var(--gris);line-height:1.6;margin-top:12px}
+    @media(max-width:420px){.resume-acces{grid-template-columns:1fr}}
+/* RÉSEAUX SOCIAUX MOBILUS */
+.reseaux-mobilus {
+    background:var(--carte);
+    border:1px solid var(--bordure);
+    border-radius:17px;
+    padding:20px 16px;
+    margin:20px 0;
+}
+
+.reseaux-mobilus h2 {
+    font-size:18px;
+    margin-bottom:8px;
+}
+
+.reseaux-mobilus > p {
+    color:var(--gris);
+    font-size:12px;
+    line-height:1.6;
+    margin-bottom:15px;
+}
+
+.reseaux-liste {
+    display:grid;
+    gap:10px;
+}
+
+.reseau-lien {
+    display:flex;
+    align-items:center;
+    gap:13px;
+    padding:14px;
+    border:1px solid #303030;
+    border-radius:12px;
+    background:#1b1b1b;
+    color:white;
+    text-decoration:none;
+    min-height:55px;
+}
+
+.reseau-lien:active {
+    background:#292020;
+}
+
+.reseau-icone {
+    width:38px;
+    height:38px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:10px;
+    background:rgba(229,9,20,.13);
+    color:#ff626a;
+    font-size:19px;
+    font-weight:bold;
+}
+
+.reseau-texte {
+    flex:1;
+    min-width:0;
+}
+
+.reseau-texte strong {
+    display:block;
+    font-size:13px;
+    margin-bottom:4px;
+}
+
+.reseau-texte small {
+    color:var(--gris);
+    font-size:11px;
+}
+
+.reseau-fleche {
+    color:#888;
+    font-size:21px;
+}
+
+</style>
+</head>
+<body>
+<div id="mobilus-loading" class="hidden" aria-hidden="true">
+    <div class="loading-circle"></div>
+</div>
+<header>
+    <div>
+        <a href="index.html" class="logo">M<span>O</span>BILUS</a>
+        <p class="sous-titre">YOUR CINEMA, EVERYWHERE</p>
+    </div>
+    <a href="index.html" class="bouton-header"><span>‹</span> Accueil</a>
+</header>
+<main>
+<section class="titre-page">
+    <div class="surtitre">ESPACE PERSONNEL</div>
+    <h1>Mon profil</h1>
+    <p>Retrouvez les informations de votre compte et gérez votre expérience MOBILUS.</p>
+</section>
+<section class="carte-profil">
+    <div class="etiquette-compte">
+        <span class="point-actif"></span>
+        SESSION ACTIVE
+    </div>
+    <div class="avatar" id="avatarInitiale">M</div>
+    <h2 id="profilNom">Chargement...</h2>
+    <p class="email-profil" id="emailSousTitre">Chargement...</p>
+    <div class="badge-mobilus">✓ Membre MOBILUS</div>
+</section>
+<div class="titre-section">
+    <h2>Mon activité</h2>
+    <span>Sur cet appareil</span>
+</div>
+<section class="grille-statistiques">
+    <article class="statistique">
+        <div class="stat-icone">◷</div>
+        <div class="stat-info">
+            <small>Historique</small>
+            <strong id="statRecents">0 film</strong>
+        </div>
+    </article>
+    <article class="statistique">
+        <div class="stat-icone">↓</div>
+        <div class="stat-info">
+            <small>Téléchargements</small>
+            <strong id="statDownloads">0 film</strong>
+        </div>
+    </article>
+    <article class="statistique">
+        <div class="stat-icone">♡</div>
+        <div class="stat-info">
+            <small>Mes favoris</small>
+            <strong id="statFavoris">0 film</strong>
+        </div>
+    </article>
+    <article class="statistique">
+        <div class="stat-icone">✓</div>
+        <div class="stat-info">
+            <small>État du compte</small>
+            <strong class="stat-vert">Connecté</strong>
+        </div>
+    </article>
+</section>
+<section class="section-informations">
+    <div class="entete-section">
+        <div class="icone-section">♙</div>
+        <div>
+            <h2>Informations personnelles</h2>
+            <p>Les informations de votre compte MOBILUS</p>
+        </div>
+    </div>
+    <div class="information"><span class="label">Nom</span><div class="valeur" id="infoNom">—</div></div>
+    <div class="information"><span class="label">Postnom</span><div class="valeur" id="infoPostnom">—</div></div>
+    <div class="information"><span class="label">Prénom</span><div class="valeur" id="infoPrenom">—</div></div>
+    <div class="information"><span class="label">Sexe</span><div class="valeur" id="infoSexe">—</div></div>
+    <div class="information"><span class="label">Date de naissance</span><div class="valeur" id="infoNaissance">—</div></div>
+    <div class="information"><span class="label">Téléphone</span><div class="valeur" id="infoTelephone">—</div></div>
+    <div class="information"><span class="label">Pays</span><div class="valeur" id="infoPays">—</div></div>
+    <div class="information"><span class="label">Ville</span><div class="valeur" id="infoVille">—</div></div>
+    <div class="information"><span class="label">Adresse e-mail</span><div class="valeur" id="emailInformation">Chargement...</div></div>
+    <button type="button" class="bouton-principal" id="ouvrirEdition">
+        Modifier mon profil
+    </button>
+</section>
+<section class="formulaire" id="formulaireProfil" hidden>
+    <h2>Modifier mes informations</h2>
+    <p>Complétez ou modifiez les informations de votre compte.</p>
+    <form id="profileForm">
+        <div class="champ">
+            <label for="nom">Nom</label>
+            <input id="nom" name="nom" type="text" maxlength="80" autocomplete="family-name">
+        </div>
+        <div class="champ">
+            <label for="postnom">Postnom</label>
+            <input id="postnom" name="postnom" type="text" maxlength="80">
+        </div>
+        <div class="champ">
+            <label for="prenom">Prénom</label>
+            <input id="prenom" name="prenom" type="text" maxlength="80" autocomplete="given-name">
+        </div>
+        <div class="champ">
+            <label for="sexe">Sexe</label>
+            <select id="sexe" name="sexe">
+                <option value="">Sélectionner</option>
+                <option value="Masculin">Masculin</option>
+                <option value="Féminin">Féminin</option>
+                <option value="Non précisé">Je préfère ne pas préciser</option>
+            </select>
+        </div>
+        <div class="champ">
+            <label for="date_naissance">Date de naissance</label>
+            <input id="date_naissance" name="date_naissance" type="date">
+        </div>
+        <div class="champ">
+            <label for="telephone">Numéro de téléphone</label>
+            <input id="telephone" name="telephone" type="tel" maxlength="25" autocomplete="tel">
+        </div>
+        <div class="champ">
+            <label for="pays">Pays</label>
+            <input id="pays" name="pays" type="text" maxlength="80" autocomplete="country-name">
+        </div>
+        <div class="champ">
+            <label for="ville">Ville</label>
+            <input id="ville" name="ville" type="text" maxlength="80" autocomplete="address-level2">
+        </div>
+        <button type="submit" class="bouton-principal" id="enregistrerProfil">
+            Enregistrer les modifications
+        </button>
+        <button type="button" class="bouton-secondaire" id="annulerEdition">
+            Annuler
+        </button>
+        <p class="message" id="messageProfil" role="status"></p>
+    </form>
+</section>
+
+<section class="bloc-abonnement" id="sectionAbonnement">
+    <div class="entete-section">
+        <div class="icone-section">★</div>
+        <div><h2>Mon abonnement</h2><p>État et durée de votre accès MOBILUS</p></div>
+    </div>
+    <div class="resume-acces">
+        <div class="resume-item"><small>Type d'accès</small><strong id="profilTypeAcces">Chargement...</strong></div>
+        <div class="resume-item"><small>Statut</small><strong id="profilStatut"><span class="badge-statut">Chargement...</span></strong></div>
+        <div class="resume-item"><small>Source Premium</small><strong id="profilSource">—</strong></div>
+        <div class="resume-item"><small>Durée</small><strong id="profilDuree">—</strong></div>
+        <div class="resume-item"><small>Date d'activation</small><strong id="profilDateDebut">—</strong></div>
+        <div class="resume-item"><small>Date d'expiration</small><strong id="profilDateFin">—</strong></div>
+    </div>
+    <p class="message-donnees" id="messageAbonnement" role="status">Les informations de votre abonnement apparaîtront ici.</p>
+    <a href="abonnement.html" class="bouton-principal" style="display:block;text-align:center;margin-top:15px">Gérer mon accès</a>
+</section>
+<section class="bloc-paiements" id="sectionHistoriquePaiements">
+    <div class="entete-section">
+        <div class="icone-section">▤</div>
+        <div><h2>Historique des paiements</h2><p>Demandes et paiements MOBILUS</p></div>
+    </div>
+    <div id="historiquePaiements" class="liste-paiements"></div>
+    <p class="message-donnees" id="messagePaiements" role="status">Chargement de l'historique...</p>
+</section>
+
+<div class="titre-section">
+    <h2>Ma bibliothèque</h2>
+    <span>Accès rapide</span>
+</div>
+<section class="options">
+    <a href="index.html" class="option">
+        <div class="option-icone">⌂</div>
+        <div class="option-texte">
+            <strong>Accueil</strong>
+            <small>Découvrir les films et les séries</small>
+        </div>
+        <span class="fleche">›</span>
+    </a>
+    <a href="telechargements.html" class="option">
+        <div class="option-icone">↓</div>
+        <div class="option-texte">
+            <strong>Mes téléchargements</strong>
+            <small>Retrouver les contenus enregistrés</small>
+        </div>
+        <span class="fleche">›</span>
+    </a>
+    <a href="recents.html" class="option">
+        <div class="option-icone">◷</div>
+        <div class="option-texte">
+            <strong>Récemment regardés</strong>
+            <small>Retrouver les contenus ouverts</small>
+        </div>
+        <span class="fleche">›</span>
+    </a>
+</section>
+<div class="titre-section">
+    <h2>Sécurité</h2>
+</div>
+<button type="button" class="bouton-deconnexion" id="logoutButton">
+    ↪ Se déconnecter
+</button>
+<button type="button" class="bouton-suppression" id="deleteAccountButton">
+    ✕ Supprimer mon compte
+</button>
+<!-- RÉSEAUX SOCIAUX ET ASSISTANCE MOBILUS -->
+<section class="reseaux-mobilus">
+    <h2>Retrouvez MOBILUS</h2>
+    <p>Suivez nos actualités et contactez notre équipe.</p>
+
+    <div class="reseaux-liste">
+
+        <a class="reseau-lien"
+           href="https://wa.me/243990631468"
+           target="_blank" rel="noopener noreferrer">
+            <span class="reseau-icone">W</span>
+            <span class="reseau-texte">
+                <strong>WhatsApp</strong>
+                <small>Assistance : +243 990 631 468</small>
+            </span>
+            <span class="reseau-fleche">›</span>
+        </a>
+
+        <a class="reseau-lien"
+           href="https://www.instagram.com/mobiluscinema/"
+           target="_blank" rel="noopener noreferrer">
+            <span class="reseau-icone">◎</span>
+            <span class="reseau-texte">
+                <strong>Instagram</strong>
+                <small>@mobiluscinema</small>
+            </span>
+            <span class="reseau-fleche">›</span>
+        </a>
+
+        <a class="reseau-lien"
+           href="https://www.facebook.com/share/1FKAVQnGuY/"
+           target="_blank" rel="noopener noreferrer">
+            <span class="reseau-icone">f</span>
+            <span class="reseau-texte">
+                <strong>Facebook</strong>
+                <small>Page officielle MOBILUS</small>
+            </span>
+            <span class="reseau-fleche">›</span>
+        </a>
+
+        <a class="reseau-lien"
+           href="https://www.tiktok.com/@mobilus.cinema"
+           target="_blank" rel="noopener noreferrer">
+            <span class="reseau-icone">♪</span>
+            <span class="reseau-texte">
+                <strong>TikTok</strong>
+                <small>@mobilus.cinema</small>
+            </span>
+            <span class="reseau-fleche">›</span>
+        </a>
+
+    </div>
+
+    <p style="margin-top:18px;margin-bottom:0">
+        <strong style="color:white">Besoin d'aide ?</strong><br>
+        Notre équipe est disponible sur WhatsApp pour vous accompagner.
+    </p>
+</section>
+<p class="avertissement">
+    <strong>MOBILUS</strong><br>
+    YOUR CINEMA, EVERYWHERE<br>
+    Votre session est enregistrée sur cet appareil.
+</p>
+</main>
+<nav class="nav-bas" aria-label="Navigation principale">
+    <a href="index.html" class="nav-item" id="navAccueil">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m3 10 9-7 9 7"></path>
+            <path d="M5 9v12h14V9"></path>
+            <path d="M9 21v-7h6v7"></path>
+        </svg>
+        <span>Accueil</span>
+    </a>
+<a href="telechargements.html" class="nav-item" id="navTelechargements">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+        <path d="m7 10 5 5 5-5"></path>
+        <path d="M12 15V3"></path>
+    </svg>
+    <span>Téléchargements</span>
+</a>
+<a href="recents.html" class="nav-item" id="navRecent">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="9"></circle>
+        <path d="M12 7v5l3 2"></path>
+    </svg>
+    <span>Récents</span>
+</a>
+<a href="profil.html" class="nav-item active" id="navProfil" aria-current="page">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="8" r="4"></circle>
+        <path d="M4 21a8 8 0 0 1 16 0"></path>
+    </svg>
+    <span>Profil</span>
+</a>
+</nav>
+<script src="app.js"></script>
+<script type="module">
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+const SUPABASE_URL = "https://uoxccezhznxmgggjupqd.supabase.co";
+const SUPABASE_KEY = "sb_publishable_-3OGf57zowok1GS8s0e9gQ_Qg2pVRmO";
+const mobilusSupabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+const $ = id => document.getElementById(id);
+const loading = $("mobilus-loading");
+let utilisateur = null;
+let profil = {};
+function afficherChargement() {
+    loading.classList.remove("hidden");
+    loading.setAttribute("aria-hidden","false");
+}
+function cacherChargement() {
+    loading.classList.add("hidden");
+    loading.setAttribute("aria-hidden","true");
+}
+function texte(id,valeur) {
+    $(id).textContent = valeur || "Non renseigné";
+}
+function remplirAffichage(d) {
+    texte("infoNom",d.nom);
+    texte("infoPostnom",d.postnom);
+    texte("infoPrenom",d.prenom);
+    texte("infoSexe",d.sexe);
+    texte("infoNaissance",d.date_naissance);
+    texte("infoTelephone",d.telephone);
+    texte("infoPays",d.pays);
+    texte("infoVille",d.ville);
+    const nomComplet = [d.prenom,d.nom,d.postnom].filter(Boolean).join(" ");
+    $("profilNom").textContent = nomComplet || utilisateur.email;
+    $("avatarInitiale").textContent =
+        (d.prenom || utilisateur.email || "M").charAt(0).toUpperCase();
+}
+function remplirFormulaire(d) {
+    $("nom").value = d.nom || "";
+    $("postnom").value = d.postnom || "";
+    $("prenom").value = d.prenom || "";
+    $("sexe").value = d.sexe || "";
+    $("date_naissance").value = d.date_naissance || "";
+    $("telephone").value = d.telephone || "";
+    $("pays").value = d.pays || "";
+    $("ville").value = d.ville || "";
+}
+async function chargerProfil() {
+    const {data,error} = await mobilusSupabase
+        .from("profils")
+        .select("*")
+        .eq("id",utilisateur.id)
+        .maybeSingle();
+    if (error) {
+        throw new Error("Impossible de charger le profil : " + error.message);
+    }
+    profil = data || {};
+    remplirAffichage(profil);
+    remplirFormulaire(profil);
+}
+function lireCollection(noms) {
+    for (const nom of noms) {
+        const valeur = localStorage.getItem(nom);
+        if (!valeur) continue;
+        try {
+            const donnees = JSON.parse(valeur);
+            if (Array.isArray(donnees)) return donnees.length;
+            if (Array.isArray(donnees.films)) return donnees.films.length;
+            if (Array.isArray(donnees.items)) return donnees.items.length;
+        } catch (e) {}
+    }
+    return 0;
+}
+function afficherNombre(id,nombre) {
+    $(id).textContent = nombre + (nombre > 1 ? " films" : " film");
+}
+function actualiserStatistiques() {
+    afficherNombre("statRecents",lireCollection([
+        "mobilusRecents","mobilusRecent","filmsRecents","historique","historiqueVisionnage"
+    ]));
+    afficherNombre("statDownloads",lireCollection([
+        "mobilusTelechargements","mobilusDownloads","telechargements","downloads"
+    ]));
+    afficherNombre("statFavoris",lireCollection([
+        "mobilusFavoris","mobilusFavorites","favoris","favorites"
+    ]));
+}
+
+function dateLisible(valeur) {
+    if (!valeur) return "Non définie";
+    const date = new Date(valeur);
+    return Number.isNaN(date.getTime()) ? "Non définie" : date.toLocaleDateString("fr-FR", {day:"2-digit",month:"long",year:"numeric"});
+}
+function dureeLisible(debut, fin) {
+    if (!debut) return "Non définie";
+    if (!fin) return "Permanent";
+    const jours = Math.max(0, Math.ceil((new Date(fin)-new Date(debut))/86400000));
+    return jours + (jours > 1 ? " jours" : " jour");
+}
+function valeurTexte(valeur) { return valeur === null || valeur === undefined || valeur === "" ? "Non renseigné" : String(valeur); }
+async function chargerAbonnementEtPaiements() {
+    const messageAcces = $("messageAbonnement");
+    const liste = $("historiquePaiements");
+    try {
+        const [accesResultat, paiementsResultat] = await Promise.all([
+            mobilusSupabase.from("acces_premium").select("source,statut,date_debut,date_fin,motif,created_at").eq("user_id", utilisateur.id).order("created_at", {ascending:false}),
+            mobilusSupabase.from("demandes_paiement").select("operateur,montant_cdf,reference_transaction,statut,code_mobilus,date_paiement,created_at,jours_accordes,date_debut,date_fin").eq("user_id", utilisateur.id).order("created_at", {ascending:false})
+        ]);
+        if (accesResultat.error) throw accesResultat.error;
+        if (paiementsResultat.error) throw paiementsResultat.error;
+        const acces = accesResultat.data || [];
+        const maintenant = Date.now();
+        const actifs = acces.filter(a => a.statut === "actif" && (!a.date_fin || new Date(a.date_fin).getTime() > maintenant));
+        const courant = actifs[0] || acces[0] || null;
+        let type = "Aucun accès Premium";
+        let statut = "Aucun abonnement actif";
+        let source = "—", debut = null, fin = null, duree = "—";
+        if (courant) {
+            type = "Premium";
+            statut = actifs.includes(courant) ? "Actif" : (courant.statut === "revoque" ? "Révoqué" : "Expiré");
+            source = courant.source === "cadeau" ? "Offert gratuitement" : "Paiement vérifié";
+            debut = courant.date_debut; fin = courant.date_fin;
+            duree = dureeLisible(debut, fin);
+        } else if (profil.type_acces) {
+            type = profil.type_acces === "gratuit" ? "Accès gratuit" : profil.type_acces;
+            statut = profil.statut_abonnement || "Non défini";
+            debut = null; fin = profil.date_fin_abonnement || null;
+            source = profil.type_acces === "gratuit" ? "Accès gratuit" : "—";
+            duree = fin ? "Jusqu'au " + dateLisible(fin) : "—";
+            if (fin && new Date(fin).getTime() <= maintenant) statut = "Expiré";
+        }
+        $("profilTypeAcces").textContent = type;
+        $("profilStatut").innerHTML = "";
+        const badge = document.createElement("span"); badge.className = "badge-statut"; badge.textContent = statut; $("profilStatut").appendChild(badge);
+        $("profilSource").textContent = source;
+        $("profilDuree").textContent = duree;
+        $("profilDateDebut").textContent = dateLisible(debut);
+        $("profilDateFin").textContent = fin ? dateLisible(fin) : (courant ? "Permanent" : "Non définie");
+        messageAcces.textContent = actifs.length ? "Votre accès est actif. Profitez de MOBILUS." : "Aucun accès Premium actif pour le moment.";
+        const paiements = paiementsResultat.data || [];
+        liste.replaceChildren();
+        if (!paiements.length) {
+            $("messagePaiements").textContent = "Aucun paiement enregistré pour le moment.";
+            return;
+        }
+        $("messagePaiements").textContent = paiements.length + " demande(s) enregistrée(s).";
+        paiements.forEach(p => {
+            const carte = document.createElement("article"); carte.className = "paiement-profil";
+            const titre = document.createElement("h3"); titre.textContent = p.statut === "accepte" ? "Paiement accepté" : p.statut === "refuse" ? "Paiement refusé" : "Paiement en attente";
+            const lignes = [
+                ["Code MOBILUS",p.code_mobilus], ["Référence de transaction",p.reference_transaction],
+                ["Opérateur",p.operateur], ["Montant",p.montant_cdf ? Number(p.montant_cdf).toLocaleString("fr-FR") + " FC" : "Non renseigné"],
+                ["Date",dateLisible(p.date_paiement || p.created_at)], ["Jours accordés",p.jours_accordes ? p.jours_accordes + " jours" : "—"]
+            ];
+            carte.appendChild(titre);
+            lignes.forEach(([label,val]) => { const ligne=document.createElement("p"); const fort=document.createElement("strong"); fort.textContent=label+" : "; ligne.append(fort,document.createTextNode(valeurTexte(val))); carte.appendChild(ligne); });
+            liste.appendChild(carte);
+        });
+    } catch (erreur) {
+        console.error("Erreur abonnement/paiements MOBILUS :",erreur);
+        messageAcces.textContent = "Impossible de charger l'abonnement : " + erreur.message;
+        $("messagePaiements").textContent = "Impossible de charger l'historique : " + erreur.message;
+    }
+}
+
+async function demarrer() {
+    try {
+        const {data,error} = await mobilusSupabase.auth.getSession();
+        if (error) throw error;
+        utilisateur = data.session?.user;
+        if (!utilisateur) {
+            localStorage.removeItem("mobilusConnecte");
+            localStorage.removeItem("mobilusEmail");
+            window.location.replace("connexion.html");
+            return;
+        }
+        localStorage.setItem("mobilusConnecte","oui");
+        localStorage.setItem("mobilusEmail",utilisateur.email || "");
+        $("emailInformation").textContent = utilisateur.email || "";
+        $("emailSousTitre").textContent = utilisateur.email || "";
+        actualiserStatistiques();
+        await chargerProfil();
+        await chargerAbonnementEtPaiements();
+    } catch (erreur) {
+        console.error(erreur);
+        alert(erreur.message);
+    } finally {
+        cacherChargement();
+    }
+}
+$("ouvrirEdition").addEventListener("click",function() {
+    remplirFormulaire(profil);
+    $("messageProfil").textContent = "";
+    $("formulaireProfil").hidden = false;
+    $("formulaireProfil").scrollIntoView({behavior:"smooth",block:"start"});
+});
+$("annulerEdition").addEventListener("click",function() {
+    $("formulaireProfil").hidden = true;
+});
+$("profileForm").addEventListener("submit",async function(event) {
+    event.preventDefault();
+    const bouton = $("enregistrerProfil");
+    const message = $("messageProfil");
+    const donnees = {
+        id:utilisateur.id,
+        nom:$("nom").value.trim(),
+        postnom:$("postnom").value.trim(),
+        prenom:$("prenom").value.trim(),
+        sexe:$("sexe").value,
+        date_naissance:$("date_naissance").value || null,
+        telephone:$("telephone").value.trim(),
+        pays:$("pays").value.trim(),
+        ville:$("ville").value.trim(),
+        updated_at:new Date().toISOString()
+    };
+    bouton.disabled = true;
+    bouton.textContent = "Enregistrement...";
+    message.textContent = "";
+    try {
+        const {error} = await mobilusSupabase
+            .from("profils")
+            .upsert(donnees,{onConflict:"id"});
+        if (error) throw error;
+        profil = donnees;
+        remplirAffichage(profil);
+        message.textContent = "Vos informations ont été enregistrées.";
+        $("formulaireProfil").hidden = true;
+    } catch (erreur) {
+        message.textContent = "Erreur : " + erreur.message;
+        message.style.color = "#ff626a";
+    } finally {
+        bouton.disabled = false;
+        bouton.textContent = "Enregistrer les modifications";
+    }
+});
+/* DÉCONNEXION DIRECTE */
+$("logoutButton").addEventListener("click",async function() {
+    afficherChargement();
+    try {
+        const {error} = await mobilusSupabase.auth.signOut();
+        if (error) console.error(error);
+    } finally {
+        localStorage.removeItem("mobilusConnecte");
+        localStorage.removeItem("mobilusEmail");
+        window.location.replace("connexion.html");
+    }
+});
+/* SUPPRESSION DU COMPTE */
+$("deleteAccountButton").addEventListener("click",async function() {
+    const confirmation = window.confirm(
+        "ATTENTION : cette action supprimera définitivement votre compte MOBILUS. Voulez-vous continuer ?"
+    );
+    if (!confirmation) return;
+    const confirmationFinale = window.prompt(
+        "Pour confirmer, écrivez SUPPRIMER en majuscules."
+    );
+    if (confirmationFinale !== "SUPPRIMER") {
+        alert("Suppression annulée.");
+        return;
+    }
+    const bouton = $("deleteAccountButton");
+    bouton.disabled = true;
+    bouton.textContent = "Suppression en cours...";
+    try {
+        const {data,error} = await mobilusSupabase.auth.getSession();
+        if (error) throw error;
+        const session = data.session;
+        if (!session) throw new Error("Session expirée.");
+        const {error:fonctionErreur} =
+            await mobilusSupabase.functions.invoke("supprimer-compte",{
+                headers:{
+                    Authorization:"Bearer " + session.access_token
+                }
+            });
+        if (fonctionErreur) throw fonctionErreur;
+        localStorage.removeItem("mobilusConnecte");
+        localStorage.removeItem("mobilusEmail");
+        await mobilusSupabase.auth.signOut();
+        window.location.replace("connexion.html");
+    } catch (erreur) {
+        alert("La suppression n'a pas abouti : " + erreur.message);
+        bouton.disabled = false;
+        bouton.textContent = "✕ Supprimer mon compte";
+    }
+});
+/* NAVIGATION */
+(function() {
+    const boutons = ["navAccueil","navTelechargements","navRecent","navProfil"];
+    let enCours = false;
+    boutons.forEach(id => {
+        const bouton = $(id);
+        if (!bouton) return;
+        bouton.addEventListener("click",function(event) {
+            const destination = bouton.getAttribute("href");
+            if (!destination || destination === "profil.html") return;
+            event.preventDefault();
+            if (enCours) return;
+            enCours = true;
+            afficherChargement();
+            setTimeout(() => {
+                window.location.href = destination;
+            },1000);
+        });
+    });
+})();
+demarrer();
+</script>
+</body>
+</html>
