@@ -1,235 +1,574 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#090909">
-<title>Abonnement - MOBILUS</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{background:#090909;color:white;font-family:Arial,sans-serif;min-height:100vh;padding:25px 15px}
-.container{max-width:480px;margin:auto}
-.logo{text-align:center;margin:20px 0 30px}
-.logo img{width:105px;height:105px;object-fit:contain}
-.logo h1{font-size:27px;letter-spacing:4px}
-.logo span{color:#ed1c24}
-.logo p{color:#999;font-size:11px;margin-top:8px;letter-spacing:2px}
-h2{text-align:center;margin-bottom:10px}
-.intro{text-align:center;color:#aaa;font-size:14px;margin-bottom:25px;line-height:1.6}
-.card{background:#171717;border:1px solid #333;border-radius:15px;padding:22px;margin-bottom:18px}
-.card h3{margin-bottom:12px;font-size:20px}
-.card p{color:#bbb;font-size:14px;line-height:1.7}
-.premium{border:1px solid #ed1c24}
-.prix{font-size:30px;font-weight:bold;margin:15px 0}
-.prix small{font-size:13px;color:#aaa}
-ul{list-style:none;margin:15px 0}
-li{font-size:14px;margin:10px 0;color:#ddd}
-button{width:100%;padding:15px;border:none;border-radius:9px;background:#ed1c24;color:white;font-size:15px;font-weight:bold;cursor:pointer;margin-top:12px}
-.gratuit button{background:#333}
-button:disabled{opacity:.45;cursor:not-allowed}
-select,input{width:100%;padding:13px;background:#252525;color:white;border:1px solid #444;border-radius:8px;margin:8px 0 15px;font-size:14px}
-label{display:block;color:#ddd;font-size:13px;font-weight:bold;margin-top:12px}
-.message{display:block;background:#222;border-radius:9px;padding:15px;margin:18px 0;font-size:14px;line-height:1.6;overflow-wrap:anywhere}
-footer{text-align:center;color:#666;font-size:12px;margin-top:30px}
-.note{color:#999;font-size:12px;line-height:1.6;margin-top:12px}
-.coordonnees{background:#242424;border:1px solid #444;padding:15px;border-radius:10px;margin:12px 0;line-height:1.8;font-size:14px}
-.coordonnees strong{color:#fff}
-</style>
-</head>
-<body>
-<div class="container">
-<div class="logo">
-<img src="mobilus.png" alt="Logo MOBILUS">
-<h1>M<span>O</span>BILUS</h1>
-<p>YOUR CINEMA, EVERYWHERE</p>
-</div>
-<h2>Choisis ton accès</h2>
-<p class="intro">
-Bienvenue sur MOBILUS ! Choisis la formule qui correspond à tes envies de cinéma.
-</p>
-<div class="message" id="message" role="status" aria-live="polite">
-Connexion à MOBILUS en cours...
-</div>
-<div class="card gratuit">
-<h3>Accès gratuit</h3>
-<div class="prix">0 $ <small>/ toujours</small></div>
-<ul>
-<li>✓ Sélection limitée de films</li>
-<li>✓ Séries gratuites</li>
-<li>✓ Accès au profil</li>
-<li>✓ Liste de favoris</li>
-</ul>
-<button id="boutonGratuit" type="button" disabled>
-Continuer gratuitement
-</button>
-</div>
-<div class="card premium">
-<p>ACCÈS COMPLET</p>
-<h3>⭐ MOBILUS PREMIUM</h3>
-<div class="prix">2 $ <small>/ tarif indicatif</small></div>
-<p>Équivalent indicatif : 5 250 FC.</p>
-<ul>
-<li>✓ Tous les films</li>
-<li>✓ Toutes les séries</li>
-<li>✓ Catalogue complet</li>
-<li>✓ Durée déterminée après validation du paiement</li>
-</ul>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#080808">
+    <title>Abonnement — MOBILUS</title>
 
-Choisir la devise :
-
-<select id="devise">
-<option value="CDF">Franc congolais (CDF)</option>
-<option value="USD">Dollar américain (USD)</option>
-</select>
-
-Méthode de paiement :
-
-<select id="methode">
-<option value="">Sélectionner un opérateur</option>
-<option value="M-Pesa">M-Pesa</option>
-<option value="Airtel Money">Airtel Money</option>
-<option value="Orange Money">Orange Money</option>
-<option value="AfriMoney">AfriMoney</option>
-</select>
-<div class="coordonnees">
-<strong>Informations de paiement</strong><br>
-Bénéficiaire : ZAWADI BANGOYA AGNÈS<br>
-Numéro : +243 990 631 468<br>
-Montant indicatif : 5 250 FC
-</div>
-
-Référence de transaction :
-
-<label for="reference">Référence de transaction :</label>
-
-<input
-    type="text"
-    id="reference"
-    placeholder="Entre la référence de ton paiement"
-    autocomplete="off"
-    maxlength="100"
->
-
-<button id="boutonPremium" type="button" disabled>
-Envoyer ma demande de paiement
-</button>
-<p class="note">
-Après ton paiement, saisis la référence de transaction et envoie ta demande.
-L'administrateur vérifiera le paiement avant d'activer ton accès Premium.
-</p>
-</div>
-<footer>© 2026 MOBILUS — YOUR CINEMA, EVERYWHERE</footer>
-</div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-const SUPABASE_URL = "https://uoxccezhznxmgggjupqd.supabase.co";
-const SUPABASE_KEY = "sb_publishable_-3OGf57zowok1GS8s0e9gQ_Qg2pVRmO";
-const message = document.getElementById("message");
-const boutonGratuit = document.getElementById("boutonGratuit");
-const boutonPremium = document.getElementById("boutonPremium");
-let supabase = null;
-let utilisateur = null;
-let traitementEnCours = false;
-function afficherMessage(texte) {
-    message.textContent = texte;
-}
-function activerBoutons() {
-    boutonGratuit.disabled = false;
-    boutonPremium.disabled = false;
-}
-function avecDelai(operation, duree = 12000) {
-    let minuterie;
-    return Promise.race([
-        operation,
-        new Promise((_, reject) => {
-            minuterie = setTimeout(() => {
-                reject(new Error(
-                    "Le serveur met trop de temps à répondre. Vérifie ta connexion Internet puis recharge la page."
-                ));
-            }, duree);
-        })
-    ]).finally(() => clearTimeout(minuterie));
-}
-async function verifierUtilisateur() {
-    try {
-        afficherMessage("Connexion à MOBILUS en cours...");
-        if (!window.supabase || !window.supabase.createClient) {
-            throw new Error(
-                "La bibliothèque Supabase n'a pas pu être chargée. Vérifie ta connexion Internet."
-            );
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        supabase = window.supabase.createClient(
-            SUPABASE_URL,
-            SUPABASE_KEY
-        );
-        const resultat = await avecDelai(
+
+        body {
+            min-height: 100vh;
+            background: #080808;
+            color: #fff;
+            font-family: Arial, Helvetica, sans-serif;
+            padding: 25px 15px 40px;
+        }
+
+        .conteneur {
+            width: 100%;
+            max-width: 520px;
+            margin: auto;
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .logo h1 {
+            font-size: 36px;
+            font-weight: 900;
+            letter-spacing: 2px;
+        }
+
+        .logo span {
+            color: #e50914;
+        }
+
+        .logo p {
+            color: #999;
+            font-size: 10px;
+            letter-spacing: 2px;
+            margin-top: 6px;
+        }
+
+        .titre {
+            font-size: 24px;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .description {
+            color: #aaa;
+            font-size: 14px;
+            text-align: center;
+            line-height: 1.6;
+            margin-bottom: 25px;
+        }
+
+        .carte {
+            background: #151515;
+            border: 1px solid #292929;
+            border-radius: 15px;
+            padding: 23px 20px;
+            margin-bottom: 18px;
+        }
+
+        .carte h2 {
+            font-size: 21px;
+            margin-bottom: 12px;
+        }
+
+        .prix {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .prix small {
+            font-size: 13px;
+            color: #aaa;
+            font-weight: normal;
+        }
+
+        .details {
+            color: #aaa;
+            font-size: 13px;
+            line-height: 1.7;
+            margin-bottom: 17px;
+        }
+
+        .gratuit {
+            border-color: #333;
+        }
+
+        .premium {
+            border-color: #e50914;
+        }
+
+        .badge {
+            display: inline-block;
+            background: #e50914;
+            color: white;
+            font-size: 10px;
+            padding: 5px 9px;
+            border-radius: 20px;
+            margin-bottom: 12px;
+        }
+
+        button {
+            width: 100%;
+            min-height: 49px;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: #e50914;
+            color: white;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+
+        button:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+
+        .bouton-gratuit {
+            background: #292929;
+            border: 1px solid #444;
+        }
+
+        .champ {
+            margin-top: 15px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+        input, select {
+            width: 100%;
+            min-height: 47px;
+            padding: 12px;
+            border: 1px solid #383838;
+            border-radius: 8px;
+            background: #090909;
+            color: white;
+            font-size: 16px;
+            outline: none;
+        }
+
+        input:focus, select:focus {
+            border-color: #e50914;
+        }
+
+        select option {
+            background: #151515;
+            color: white;
+        }
+
+        #message {
+            display: block;
+            padding: 12px;
+            margin: 15px 0;
+            border-radius: 8px;
+            font-size: 13px;
+            line-height: 1.6;
+            background: #171717;
+            color: #ddd;
+        }
+
+        #message.succes {
+            background: #102417;
+            color: #8ee6a0;
+        }
+
+        #message.erreur {
+            background: #301313;
+            color: #ff9292;
+        }
+
+        #message.info {
+            background: #17202b;
+            color: #a9d2ff;
+        }
+
+        .instructions {
+            background: #101010;
+            border: 1px solid #292929;
+            border-radius: 9px;
+            padding: 13px;
+            margin-top: 15px;
+            font-size: 13px;
+            line-height: 1.8;
+            color: #ccc;
+        }
+
+        .instructions strong {
+            color: white;
+        }
+
+        .note {
+            color: #777;
+            font-size: 11px;
+            text-align: center;
+            line-height: 1.6;
+            margin-top: 20px;
+        }
+
+        .retour {
+            display: block;
+            text-align: center;
+            color: #aaa;
+            text-decoration: none;
+            font-size: 13px;
+            margin-top: 20px;
+        }
+
+        .retour:hover {
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+
+<main class="conteneur">
+
+    <header class="logo">
+        <h1>M<span>O</span>BILUS</h1>
+        <p>YOUR CINEMA, EVERYWHERE</p>
+    </header>
+
+    <h2 class="titre">Choisis ton accès</h2>
+
+    <p class="description">
+        Sélectionne la formule qui correspond à ton expérience
+        cinématographique sur MOBILUS.
+    </p>
+
+    <div id="message" class="info" role="status" aria-live="polite">
+        Vérification de ta connexion...
+    </div>
+
+    <!-- ACCÈS GRATUIT -->
+
+    <section class="carte gratuit">
+
+        <h2>Accès gratuit</h2>
+
+        <p class="prix">
+            0 FC
+            <small>/ gratuit</small>
+        </p>
+
+        <p class="details">
+            Profite des contenus accessibles gratuitement
+            sur MOBILUS.
+        </p>
+
+        <button
+            type="button"
+            id="boutonGratuit"
+            class="bouton-gratuit"
+            disabled>
+            Activer l'accès gratuit
+        </button>
+
+    </section>
+
+    <!-- ABONNEMENT PREMIUM -->
+
+    <section class="carte premium">
+
+        <span class="badge">EXPÉRIENCE PREMIUM</span>
+
+        <h2>Abonnement Premium</h2>
+
+        <p class="prix">
+            2 $
+            <small>/ 5 250 FC</small>
+        </p>
+
+        <p class="details">
+            Accède à l'expérience Premium de MOBILUS
+            après validation de ton paiement par l'administration.
+        </p>
+
+        <div class="champ">
+
+            <label for="operateur">
+                Choisir ton moyen de paiement
+            </label>
+
+            <select id="operateur">
+                <option value="">Sélectionner un opérateur</option>
+                <option value="M-Pesa">M-Pesa</option>
+                <option value="Airtel Money">Airtel Money</option>
+                <option value="Orange Money">Orange Money</option>
+                <option value="AfriMoney">AfriMoney</option>
+            </select>
+
+        </div>
+
+        <div class="champ">
+
+            <label for="devise">
+                Devise du paiement
+            </label>
+
+            <select id="devise">
+                <option value="CDF">Franc congolais (CDF)</option>
+                <option value="USD">Dollar américain (USD)</option>
+            </select>
+
+        </div>
+
+        <div class="champ">
+
+            <label for="reference">
+                Référence de transaction
+            </label>
+
+            <input
+                type="text"
+                id="reference"
+                placeholder="Entre ta référence de paiement"
+                autocomplete="off">
+        </div>
+
+        <div class="instructions">
+
+            <strong>Informations de paiement</strong><br>
+
+            Bénéficiaire :
+            <strong>ZAWADI BANGOYA AGNES</strong><br>
+
+            Numéro :
+            <strong>+243 990 631 468</strong><br>
+
+            Montant :
+            <strong>5 250 FC ou 2 USD</strong>
+
+            <p style="margin-top:10px;">
+                Après avoir effectué ton paiement, indique
+                la référence de ta transaction et envoie
+                ta demande de validation.
+            </p>
+
+        </div>
+
+        <button
+            type="button"
+            id="boutonPremium"
+            disabled>
+            Envoyer ma demande Premium
+        </button>
+
+    </section>
+
+    <a href="connexion.html" class="retour">
+        Retour à la connexion
+    </a>
+
+    <p class="note">
+        MOBILUS — YOUR CINEMA, EVERYWHERE
+    </p>
+
+</main>
+
+<script type="module">
+
+import { createClient }
+    from "https://esm.sh/@supabase/supabase-js@2";
+
+/* CONFIGURATION SUPABASE */
+
+const SUPABASE_URL =
+    "https://uoxccezhznxmgggjupqd.supabase.co";
+
+const SUPABASE_KEY =
+    "sb_publishable_-3OGf57zowok1GS8s0e9gQ_Qg2pVRmO";
+
+const supabase = createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+);
+
+/* ÉLÉMENTS */
+
+const message = document.getElementById("message");
+
+const boutonGratuit =
+    document.getElementById("boutonGratuit");
+
+const boutonPremium =
+    document.getElementById("boutonPremium");
+
+const operateur =
+    document.getElementById("operateur");
+
+const devise =
+    document.getElementById("devise");
+
+const reference =
+    document.getElementById("reference");
+
+let utilisateurConnecte = null;
+let profilUtilisateur = null;
+let verificationTerminee = false;
+
+/* AFFICHER UN MESSAGE */
+
+function afficherMessage(texte, type = "info") {
+    message.textContent = texte;
+    message.className = type;
+}
+
+/* DÉLAI DE SÉCURITÉ */
+
+function avecDelai(promise, millisecondes = 15000) {
+
+    return Promise.race([
+        promise,
+
+        new Promise((_, reject) => {
+            setTimeout(() => {
+                reject(
+                    new Error(
+                        "La connexion prend trop de temps. Vérifie ta connexion Internet puis réessaie."
+                    )
+                );
+            }, millisecondes);
+        })
+    ]);
+}
+
+/* VÉRIFIER L'UTILISATEUR ET SON PROFIL */
+
+async function verifierUtilisateur() {
+
+    boutonGratuit.disabled = true;
+    boutonPremium.disabled = true;
+
+    afficherMessage(
+        "Vérification de ta connexion MOBILUS...",
+        "info"
+    );
+
+    try {
+
+        const resultatSession = await avecDelai(
             supabase.auth.getSession()
         );
-        if (resultat.error) throw resultat.error;
-        const session = resultat.data.session;
+
+        if (resultatSession.error) {
+            throw resultatSession.error;
+        }
+
+        const session = resultatSession.data.session;
+
         if (!session) {
-            afficherMessage("Tu n'es pas connecté. Redirection vers la connexion...");
+
+            afficherMessage(
+                "Tu dois te connecter avant de choisir ton abonnement.",
+                "erreur"
+            );
+
             setTimeout(() => {
                 window.location.replace("connexion.html");
-            }, 1800);
+            }, 1500);
+
             return;
         }
-        utilisateur = session.user;
-        afficherMessage("Vérification de ton profil...");
+
+        utilisateurConnecte = session.user;
+
         const resultatProfil = await avecDelai(
             supabase
                 .from("profils")
-                .select("id,type_acces,statut_abonnement,date_fin_abonnement")
-                .eq("id", utilisateur.id)
+                .select(
+                    "id,type_acces,statut_abonnement,date_fin_abonnement"
+                )
+                .eq("id", utilisateurConnecte.id)
                 .maybeSingle()
         );
-        if (resultatProfil.error) throw resultatProfil.error;
-        const profil = resultatProfil.data;
-        if (!profil) {
-            afficherMessage("Profil introuvable. Redirection vers l'inscription...");
+
+        if (resultatProfil.error) {
+            throw resultatProfil.error;
+        }
+
+        profilUtilisateur = resultatProfil.data;
+
+        if (!profilUtilisateur) {
+
+            afficherMessage(
+                "Ton profil MOBILUS est introuvable. Termine d'abord ton inscription.",
+                "erreur"
+            );
+
             setTimeout(() => {
                 window.location.replace("inscription.html");
             }, 1800);
+
             return;
         }
-        const premiumActif =
-            profil.type_acces === "premium" &&
-            profil.statut_abonnement === "actif" &&
-            profil.date_fin_abonnement &&
-            new Date(profil.date_fin_abonnement).getTime() > Date.now();
-        const gratuitActif =
-            profil.type_acces === "gratuit" &&
-            profil.statut_abonnement === "actif";
-        if (premiumActif || gratuitActif) {
-            afficherMessage("Ton accès MOBILUS est déjà actif. Ouverture...");
-            setTimeout(() => {
-                window.location.replace("index.html");
-            }, 1200);
-            return;
-        }
+
+        verificationTerminee = true;
+
+        boutonGratuit.disabled = false;
+        boutonPremium.disabled = false;
+
         afficherMessage(
-            "Connecté avec " + (utilisateur.email || "ton compte") +
-            ". Choisis ton accès."
+            "Connexion vérifiée. Tu peux maintenant choisir ton accès MOBILUS.",
+            "succes"
         );
-        activerBoutons();
+
     } catch (erreur) {
-        console.error("Erreur MOBILUS :", erreur);
-        afficherMessage(
-            "Impossible de terminer la connexion : " +
-            (erreur.message || "Erreur inconnue")
+
+        console.error(
+            "Erreur de vérification MOBILUS :",
+            erreur
         );
+
+        afficherMessage(
+            "Erreur Supabase : " +
+            (erreur.message || "Impossible de vérifier ton profil."),
+            "erreur"
+        );
+
+        boutonGratuit.disabled = true;
+        boutonPremium.disabled = true;
     }
 }
+
+/* ACTIVER L'ACCÈS GRATUIT */
+
 async function choisirGratuit() {
-    if (!utilisateur || traitementEnCours) {
-        afficherMessage("La connexion n'est pas encore prête.");
+
+    if (!verificationTerminee || !utilisateurConnecte) {
+
+        afficherMessage(
+            "Ta connexion n'a pas encore été vérifiée. Recharge la page.",
+            "erreur"
+        );
+
         return;
     }
-    traitementEnCours = true;
+
     boutonGratuit.disabled = true;
     boutonPremium.disabled = true;
-    afficherMessage("Activation de ton accès gratuit...");
+
+    boutonGratuit.textContent = "Activation...";
+
+    afficherMessage(
+        "Activation de ton accès gratuit...",
+        "info"
+    );
+
     try {
+
         const resultat = await avecDelai(
             supabase
                 .from("profils")
@@ -239,96 +578,184 @@ async function choisirGratuit() {
                     date_fin_abonnement: null,
                     updated_at: new Date().toISOString()
                 })
-                .eq("id", utilisateur.id)
+                .eq("id", utilisateurConnecte.id)
                 .select("id")
         );
-        if (resultat.error) throw resultat.error;
+
+        if (resultat.error) {
+            throw resultat.error;
+        }
+
         if (!resultat.data || resultat.data.length === 0) {
+
             throw new Error(
-                "Aucun profil modifié. Vérifie les autorisations de ta table profils."
+                "Aucun profil modifié. Vérifie les autorisations UPDATE de la table profils."
             );
         }
-        localStorage.setItem("mobilusConnecte", "oui");
-        localStorage.setItem("mobilusEmail", utilisateur.email || "");
-        afficherMessage("Accès gratuit activé ! Ouverture de MOBILUS...");
+
+        localStorage.setItem(
+            "mobilusConnecte",
+            "oui"
+        );
+
+        localStorage.setItem(
+            "mobilusEmail",
+            utilisateurConnecte.email || ""
+        );
+
+        afficherMessage(
+            "Ton accès gratuit est activé. Bienvenue sur MOBILUS !",
+            "succes"
+        );
+
         setTimeout(() => {
             window.location.replace("index.html");
         }, 1200);
+
     } catch (erreur) {
-        afficherMessage("Impossible d'activer l'accès gratuit : " + erreur.message);
-        traitementEnCours = false;
-        activerBoutons();
+
+        console.error(
+            "Erreur accès gratuit :",
+            erreur
+        );
+
+        afficherMessage(
+            erreur.message ||
+            "Impossible d'activer ton accès gratuit.",
+            "erreur"
+        );
+
+        boutonGratuit.disabled = false;
+        boutonPremium.disabled = false;
+
+    } finally {
+
+        boutonGratuit.textContent =
+            "Activer l'accès gratuit";
     }
 }
+
+/* ENVOYER UNE DEMANDE PREMIUM */
+
 async function choisirPremium() {
-    if (!utilisateur || traitementEnCours) {
-        afficherMessage("La connexion n'est pas encore prête.");
+
+    if (!verificationTerminee || !utilisateurConnecte) {
+
+        afficherMessage(
+            "Ta connexion n'a pas encore été vérifiée.",
+            "erreur"
+        );
+
         return;
     }
-    const methode = document.getElementById("methode").value;
-    const devise = document.getElementById("devise").value;
-    const reference = document.getElementById("reference").value.trim();
+
+    const methode = operateur.value;
+    const monnaie = devise.value;
+    const ref = reference.value.trim();
+
     if (!methode) {
-        afficherMessage("Choisis ton opérateur de paiement.");
+
+        afficherMessage(
+            "Sélectionne d'abord ton opérateur de paiement.",
+            "erreur"
+        );
+
         return;
     }
-    if (reference.length < 4) {
-        afficherMessage("Entre une référence de transaction valide.");
+
+    if (ref.length < 4) {
+
+        afficherMessage(
+            "Entre une référence de transaction valide.",
+            "erreur"
+        );
+
         return;
     }
-    if (!confirm("Confirmer l'envoi de ta demande de paiement MOBILUS ?")) {
-        return;
-    }
-    traitementEnCours = true;
+
     boutonGratuit.disabled = true;
     boutonPremium.disabled = true;
-    afficherMessage("Enregistrement de ta demande...");
+
+    boutonPremium.textContent = "Envoi en cours...";
+
+    afficherMessage(
+        "Enregistrement de ta demande Premium...",
+        "info"
+    );
+
     try {
-        const resultatSession = await avecDelai(
-            supabase.auth.getSession()
-        );
-        if (resultatSession.error) throw resultatSession.error;
-        if (!resultatSession.data.session) {
-            throw new Error("Ta session a expiré. Reconnecte-toi.");
-        }
+
+        const montantCDF = monnaie === "CDF" ? 5250 : null;
+
+        const montantUSD = monnaie === "USD" ? 2 : null;
+
         const resultat = await avecDelai(
             supabase
                 .from("demandes_paiement")
                 .insert({
-                    user_id: utilisateur.id,
-                    email: utilisateur.email,
+                    user_id: utilisateurConnecte.id,
+                    email: utilisateurConnecte.email,
                     operateur: methode,
                     numero_destination: "+243990631468",
                     beneficiaire: "ZAWADI BANGOYA AGNES",
-                    montant_cdf: 5250,
-                    reference_transaction: reference
+                    montant_cdf: montantCDF,
+                    montant_usd: montantUSD,
+                    reference_transaction: ref
                 })
+                .select("id")
         );
-        if (resultat.error) throw resultat.error;
+
+        if (resultat.error) {
+            throw resultat.error;
+        }
+
         afficherMessage(
-            "Ta demande a été envoyée avec succès. " +
-            "Opérateur : " + methode + ". " +
-            "Devise sélectionnée : " + devise + ". " +
-            "Référence : " + reference + ". " +
-            "Ton paiement doit être vérifié par l'administrateur. " +
-            "Ton accès Premium n'est pas encore activé."
+            "Ta demande Premium a été envoyée. Elle sera examinée par l'administration MOBILUS.",
+            "succes"
         );
-        document.getElementById("reference").value = "";
+
+        reference.value = "";
+
     } catch (erreur) {
-        afficherMessage("Erreur : " + erreur.message);
+
+        console.error(
+            "Erreur demande Premium :",
+            erreur
+        );
+
+        afficherMessage(
+            erreur.message ||
+            "Impossible d'envoyer ta demande Premium.",
+            "erreur"
+        );
+
     } finally {
-        traitementEnCours = false;
-        activerBoutons();
+
+        boutonPremium.textContent =
+            "Envoyer ma demande Premium";
+
+        boutonGratuit.disabled = false;
+        boutonPremium.disabled = false;
     }
 }
-boutonGratuit.addEventListener("click", choisirGratuit);
-boutonPremium.addEventListener("click", choisirPremium);
+
+/* ÉVÉNEMENTS DES BOUTONS */
+
+boutonGratuit.addEventListener(
+    "click",
+    choisirGratuit
+);
+
+boutonPremium.addEventListener(
+    "click",
+    choisirPremium
+);
+
+/* VÉRIFICATION AU CHARGEMENT */
+
 verifierUtilisateur();
+
 </script>
-<!-- TEST : VÉRIFIER SI JAVASCRIPT FONCTIONNE DANS KODER -->
-<script>
-document.getElementById("message").textContent =
-"TEST : JavaScript fonctionne dans Koder.";
-</script>
+
 </body>
 </html>
