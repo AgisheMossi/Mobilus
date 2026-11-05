@@ -9,61 +9,61 @@
 </head>
 <body>
 <main class="connexion-container">
-    <a href="index.html" class="logo">
-        <img src="mobilus.png" alt="Logo MOBILUS"
-             onerror="this.style.display='none'">
-        <span class="logo-nom">MOBILUS</span>
-    </a>
-    <section class="connexion-box">
-        <h1>Bienvenue sur MOBILUS</h1>
-        <p class="sous-titre">
-            Connecte-toi pour retrouver tes films et séries préférés.
-        </p>
-        <form id="formConnexion">
-            <div id="etapeEmail">
-                <label for="email">Adresse e-mail</label>
-                <input
-                    type="email"
-                    id="email"
-                    placeholder="exemple@email.com"
-                    autocomplete="email"
-                    required
-                >
-                <button type="submit" id="boutonConnexion">
-                    Recevoir mon code
-                </button>
-            </div>
-            <div id="etapeCode" hidden>
-                <label for="codeOTP">Code de vérification</label>
-                <input
-                    type="text"
-                    id="codeOTP"
-                    placeholder="Entre ton code à 6 chiffres"
-                    inputmode="numeric"
-                    autocomplete="one-time-code"
-                    maxlength="6"
-                    pattern="[0-9]{6}"
-                >
-                <button type="button" id="boutonVerifier">
-                    Vérifier mon code
-                </button>
-                <button type="button" id="boutonRetour">
-                    Changer d'adresse e-mail
-                </button>
-                <button type="button" id="boutonRenvoyer">
-                    Renvoyer le code
-                </button>
-            </div>
-        </form>
-        <p id="message" role="status" aria-live="polite"></p>
-        <p class="conditions">
-            En te connectant, tu acceptes les conditions d'utilisation
-            de MOBILUS.
-        </p>
-    </section>
-    <footer>
-        © 2026 MOBILUS — YOUR CINEMA, EVERYWHERE
-    </footer>
+<a href="index.html" class="logo">
+    <img src="mobilus.png" alt="Logo MOBILUS"
+         onerror="this.style.display='none'">
+    <span class="logo-nom">MOBILUS</span>
+</a>
+<section class="connexion-box">
+    <h1>Bienvenue sur MOBILUS</h1>
+    <p class="sous-titre">
+        Connecte-toi pour retrouver tes films et séries préférés.
+    </p>
+    <form id="formConnexion">
+        <div id="etapeEmail">
+            <label for="email">Adresse e-mail</label>
+            <input
+                type="email"
+                id="email"
+                placeholder="exemple@email.com"
+                autocomplete="email"
+                required
+            >
+            <button type="submit" id="boutonConnexion">
+                Recevoir mon code
+            </button>
+        </div>
+        <div id="etapeCode" hidden>
+            <label for="codeOTP">Code de vérification</label>
+            <input
+                type="text"
+                id="codeOTP"
+                placeholder="Entre ton code à 6 chiffres"
+                inputmode="numeric"
+                autocomplete="one-time-code"
+                maxlength="6"
+                pattern="[0-9]{6}"
+            >
+            <button type="button" id="boutonVerifier">
+                Vérifier mon code
+            </button>
+            <button type="button" id="boutonRetour">
+                Changer d'adresse e-mail
+            </button>
+            <button type="button" id="boutonRenvoyer">
+                Renvoyer le code
+            </button>
+        </div>
+    </form>
+    <p id="message" role="status" aria-live="polite"></p>
+    <p class="conditions">
+        En te connectant, tu acceptes les conditions d'utilisation
+        de MOBILUS.
+    </p>
+</section>
+<footer>
+    © 2026 MOBILUS — YOUR CINEMA, EVERYWHERE
+</footer>
 </main>
 <script type="module">
 import { createClient }
@@ -76,6 +76,10 @@ const supabase = createClient(
     SUPABASE_URL,
     SUPABASE_KEY
 );
+const ADMINS_MOBILUS = [
+    "mobiluscinema@gmail.com",
+    "agishemossi@gmail.com"
+];
 const formulaire = document.getElementById("formConnexion");
 const champEmail = document.getElementById("email");
 const champCode = document.getElementById("codeOTP");
@@ -100,30 +104,38 @@ function afficherErreurDetaillee(erreur) {
         true
     );
 }
-// VÉRIFIER LE PROFIL ET CHOISIR LA DESTINATION
+// REDIRECTION APRÈS VÉRIFICATION DU VRAI OTP
 async function redirigerApresConnexion(utilisateur) {
     if (redirectionEnCours) return;
     redirectionEnCours = true;
     afficherMessage("Vérification de ton compte MOBILUS...");
     try {
+        const email = utilisateur.email?.toLowerCase();
+        if (!email) {
+            throw new Error("Adresse e-mail introuvable.");
+        }
+        localStorage.setItem("mobilusConnecte", "oui");
+        localStorage.setItem("mobilusEmail", email);
+        // ADMINISTRATEURS : ACCÈS DIRECT À L'ADMINISTRATION
+        if (ADMINS_MOBILUS.includes(email)) {
+            afficherMessage(
+                "Connexion administrateur réussie !"
+            );
+            window.location.replace("admin.html");
+            return;
+        }
+        // UTILISATEURS NORMAUX : VÉRIFICATION DU PROFIL
         const { data: profil, error } = await supabase
             .from("profils")
             .select("*")
             .eq("id", utilisateur.id)
             .maybeSingle();
         if (error) throw error;
-        localStorage.setItem("mobilusConnecte", "oui");
-        localStorage.setItem(
-            "mobilusEmail",
-            utilisateur.email || ""
-        );
-        // CAS 1 : AUCUN PROFIL
         if (!profil) {
             afficherMessage("Terminons ton inscription...");
             window.location.replace("inscription.html");
             return;
         }
-        // CAS 2 : PROFIL INCOMPLET
         const profilComplet =
             profil.nom &&
             profil.prenom &&
@@ -131,36 +143,46 @@ async function redirigerApresConnexion(utilisateur) {
             profil.pays &&
             profil.ville;
         if (!profilComplet) {
-            afficherMessage("Ton inscription doit être terminée...");
+            afficherMessage(
+                "Ton inscription doit être terminée..."
+            );
             window.location.replace("inscription.html");
             return;
         }
-        // CAS 3 : PROFIL COMPLET, MAIS AUCUN ACCÈS CHOISI
         const accesChoisi =
             profil.type_acces ||
             profil.statut_abonnement;
         if (!accesChoisi) {
-            afficherMessage("Choisis ton mode d'accès à MOBILUS...");
+            afficherMessage(
+                "Choisis ton mode d'accès à MOBILUS..."
+            );
             window.location.replace("abonnement.html");
             return;
         }
-        // CAS 4 : COMPTE DÉJÀ CONFIGURÉ
-        afficherMessage("Connexion réussie ! Bienvenue sur MOBILUS.");
+        afficherMessage(
+            "Connexion réussie ! Bienvenue sur MOBILUS."
+        );
         window.location.replace("index.html");
     } catch (erreur) {
-        console.error("Erreur de vérification du profil :", erreur);
+        console.error(
+            "Erreur de vérification du compte :",
+            erreur
+        );
         afficherMessage(
-            "Impossible de vérifier ton profil. Vérifie ta connexion et réessaie.",
+            "Impossible de vérifier ton compte. Réessaie.",
             true
         );
         redirectionEnCours = false;
     }
 }
-// ENVOYER LE CODE
+// ENVOYER LE CODE OTP
 async function envoyerCode() {
     const email = champEmail.value.trim().toLowerCase();
     if (!email) {
-        afficherMessage("Entre une adresse e-mail valide.", true);
+        afficherMessage(
+            "Entre une adresse e-mail valide.",
+            true
+        );
         return;
     }
     emailUtilisateur = email;
@@ -188,12 +210,15 @@ async function envoyerCode() {
         boutonConnexion.textContent = "Recevoir mon code";
     }
 }
-// VÉRIFIER LE CODE
+// VÉRIFIER LE CODE OTP
 async function verifierCode() {
     if (verificationEnCours) return;
     const code = champCode.value.trim();
     if (!/^[0-9]{6}$/.test(code)) {
-        afficherMessage("Entre un code valide de 6 chiffres.", true);
+        afficherMessage(
+            "Entre un code valide de 6 chiffres.",
+            true
+        );
         return;
     }
     verificationEnCours = true;
@@ -256,19 +281,30 @@ champCode.addEventListener("input", function() {
         .replace(/[^0-9]/g, "")
         .slice(0, 6);
 });
-// RESTAURER UNE SESSION EXISTANTE
-async function verifierSession() {
+// UNE SESSION EXISTANTE NE DOIT PAS CONTOURNER LE CODE OTP
+async function verifierSessionExistante() {
     try {
         const { data, error } = await supabase.auth.getSession();
         if (error) throw error;
         if (data.session) {
-            await redirigerApresConnexion(data.session.user);
+            // On ferme l'ancienne session pour imposer
+            // une nouvelle vérification OTP.
+            await supabase.auth.signOut();
+            localStorage.removeItem("mobilusConnecte");
+            localStorage.removeItem("mobilusEmail");
         }
     } catch (erreur) {
-        console.error("Erreur de session :", erreur);
+        console.error(
+            "Erreur de vérification de session :",
+            erreur
+        );
+        afficherMessage(
+            "Impossible de préparer la connexion. Recharge la page.",
+            true
+        );
     }
 }
-verifierSession();
+verifierSessionExistante();
 </script>
 </body>
 </html>
