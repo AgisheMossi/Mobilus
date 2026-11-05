@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MOBILUS — Your Cinema, Everywhere</title>
+    <meta name="description"
+          content="MOBILUS : découvrez des films, des séries et des contenus vidéo.">
+    <meta name="theme-color" content="#090909">
+    <style>
+        :root {
+            --fond: #090909;
+            --fond-secondaire: #141414;
+            --carte: #191919;
+            --rouge: #e50914;
+            --rouge-clair: #ff405d;
+            --jaune: #ffd400;
+            --blanc: #ffffff;
+            --gris: #aaaaaa;
+            --vert-whatsapp: #25D366;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        html {
+            scroll-behavior: smooth;
+            scroll-padding-top: 90px;
+        }
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: var(--fond);
+            color: var(--blanc);
+            min-height: 100vh;
+            padding-bottom: 95px;
+        }
+        button, input {
+            font: inherit;
+        }
+        button, a {
+            -webkit-tap-highlight-color: transparent;
+        }
+        a {
+            color: inherit;
+        }
+        /* EN-TÊTE */
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 18px;
+            background: rgba(9, 9, 9, 0.96);
+            border-bottom: 1px solid #252525;
+            backdrop-filter: blur(12px);
+            transition: transform 0.3s ease;
+        }
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+        .logo-image {
+            width: 43px;
+            height: 43px;
+            object-fit: contain;
+        }
+        .logo-texte {
+            font-size: 24px;
+            font-weight: 900;
+            letter-spacing: 1px;
+        }
+        .lettre-rouge {
+            color: var(--rouge);
+        }
+        .slogan {
+            display: block;
+            font-size: 8px;
+            color: #aaaaaa;
+            letter-spacing: 1.2px;
+            margin-top: 3px;
+        }
+        .bouton-profil {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            border: 1px solid #383838;
+            background: #202020;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            font-size: 20px;
+        }
+        /* CONTENU PRINCIPAL */
+        main {
+            max-width: 1200px;
+            margin: auto;
+        }
+        .hero {
+            position: relative;
+            padding: 45px 20px 35px;
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: center;
+            overflow: hidden;
+            background:
+                radial-gradient(
+                    ellipse at 85% 20%,
+                    rgba(229, 9, 20, 0.20),
+                    transparent 45%
+                ),
+                linear-gradient(135deg, #171717, #090909 75%);
+            border-bottom: 1px solid #242424;
+        }
+        .hero::after {
+            content: "M";
+            position: absolute;
+            right: -5px;
+            top: 5px;
+            font-size: 230px;
+            line-height: 1;
+            font-weight: 900;
+            color: rgba(255, 255, 255, 0.025);
+            pointer-events: none;
+        }
+        .hero-contenu {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+        }
+        .hero-label {
+            color: var(--rouge-clair);
+            font-size: 12px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+        }
+        .hero h1 {
+            font-size: clamp(34px, 8vw, 56px);
+            line-height: 1.08;
+            font-weight: 900;
+            max-width: 600px;
+            margin-bottom: 15px;
+        }
+        .hero-description {
+            max-width: 470px;
+            color: #bdbdbd;
+            font-size: 14px;
+            line-height: 1.7;
+            margin-bottom: 22px;
+        }
+        .hero-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .bouton-principal,
+        .bouton-secondaire {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            padding: 12px 17px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: bold;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+        }
+        .bouton-principal {
+            background: var(--rouge);
+            color: white;
+        }
+        .bouton-secondaire {
+            background: #292929;
+            color: white;
+            border: 1px solid #414141;
+        }
+        /* WHATSAPP */
+        .whatsapp-channel {
+            position: relative;
+            z-index: 2;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+            padding: 13px 17px;
+            max-width: 100%;
+            background: var(--vert-whatsapp);
+            color: #071b0e;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 800;
+            border-radius: 10px;
+            transition: transform 0.2s ease;
+        }
+        .whatsapp-channel:active {
+            transform: scale(0.97);
+        }
+        .whatsapp-icon {
+            width: 25px;
+            height: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            background: white;
+            color: #168a43;
+            border-radius: 50%;
+            font-size: 17px;
+        }
+        /* RECHERCHE */
+        .search-section {
+            padding: 24px 18px 15px;
+        }
+        .search-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0 15px;
+            height: 49px;
+            background: #171717;
+            border: 1px solid #333333;
+            border-radius: 12px;
+        }
+        .search-icon {
+            font-size: 20px;
+            color: #aaaaaa;
+        }
+        .search-box input {
+            width: 100%;
+            min-width: 0;
+            border: none;
+            outline: none;
+            background: transparent;
+            color: white;
+            font-size: 14px;
+        }
+        .search-box input::placeholder {
+            color: #888888;
+        }
+        /* SECTIONS */
+        .section {
+            padding: 20px 18px;
+            scroll-margin-top: 85px;
+        }
+        .section-heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+        .section-heading h2 {
+            font-size: 20px;
+            font-weight: 800;
+        }
+        .section-heading p {
+            color: var(--gris);
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        .section-link {
+            color: var(--rouge-clair);
+            font-size: 12px;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+        /* CATÉGORIES */
+        .categories-list {
+            display: flex;
+            gap: 9px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+            scrollbar-width: none;
+        }
+        .categories-list::-webkit-scrollbar {
+            display: none;
+        }
+        .category-btn {
+            flex-shrink: 0;
+            padding: 10px 15px;
+            border: 1px solid #333333;
+            border-radius: 25px;
+            background: #191919;
+            color: #cccccc;
+            font-size: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .category-btn.active,
+        .category-btn:hover {
+            background: var(--rouge);
+            color: white;
+            border-color: var(--rouge);
+        }
+        /* GRILLE DES FILMS */
+        .movie-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 15px 12px;
+        }
+        .movie-card {
+            min-width: 0;
+            overflow: hidden;
+            background: var(--carte);
+            border-radius: 12px;
+            border: 1px solid #292929;
+            transition: transform 0.2s ease;
+        }
+        .movie-card:active {
+            transform: scale(0.98);
+        }
+        .movie-poster {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 2 / 3;
+            overflow: hidden;
+            background: #252525;
+        }
+        .movie-poster img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .movie-poster .poster-placeholder {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 42px;
+            color: #666666;
+        }
+        .movie-badge {
+            position: absolute;
+            top: 9px;
+            left: 9px;
+            padding: 5px 8px;
+            background: var(--rouge);
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+            border-radius: 5px;
+        }
+        .movie-info {
+            padding: 12px;
+        }
+        .movie-info h3 {
+            font-size: 14px;
+            line-height: 1.4;
+            margin-bottom: 7px;
+            overflow-wrap: anywhere;
+        }
+        .movie-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 5px;
+            color: #aaaaaa;
+            font-size: 11px;
+        }
+        .movie-rating {
+            color: var(--jaune);
+        }
+        .movie-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .movie-actions a,
+        .movie-actions button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            min-width: 0;
+            padding: 9px 5px;
+            border: none;
+            border-radius: 7px;
+            background: #292929;
+            color: white;
+            font-size: 11px;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .movie-actions .play-btn {
+            background: var(--rouge);
+        }
+        .empty-message {
+            grid-column: 1 / -1;
+            padding: 35px 15px;
+            text-align: center;
+            color: #999999;
+            font-size: 14px;
+            line-height: 1.7;
+        }
+        /* AUTRES SECTIONS */
+        .info-card {
+            padding: 22px;
+            background: #171717;
+            border: 1px solid #303030;
+            border-radius: 12px;
+        }
+        .info-card p {
+            color: #aaaaaa;
+            font-size: 14px;
+            line-height: 1.7;
+        }
+        .info-card a {
+            display: inline-block;
+            margin-top: 14px;
+            color: var(--rouge-clair);
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 13px;
+        }
+        /* MENU INFÉRIEUR */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            padding: 9px 5px calc(9px + env(safe-area-inset-bottom));
+            background: rgba(12, 12, 12, 0.98);
+            border-top: 1px solid #292929;
+            backdrop-filter: blur(15px);
+            transition: transform 0.3s ease;
+        }
+        .nav-item {
+            display: flex;
+            flex: 1;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            padding: 5px 2px;
+            color: #858585;
+            text-decoration: none;
+            font-size: 10px;
+            cursor: pointer;
+            background: transparent;
+            border: none;
+        }
+        .nav-item svg {
+            width: 22px;
+            height: 22px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 1.8;
+        }
+        .nav-item.active {
+            color: var(--rouge-clair);
+        }
+        /* CHARGEMENT MOBILUS */
+        #mobilus-loading {
+            position: fixed;
+            inset: 0;
+            z-index: 99999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 18px;
+            background: #090909;
+            opacity: 1;
+            visibility: visible;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+        #mobilus-loading.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        .loading-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+        .loading-logo {
+            width: 95px;
+            height: 95px;
+            object-fit: contain;
+            animation: logoPulse 1.4s ease-in-out infinite;
+        }
+        .loading-wordmark {
+            font-size: 28px;
+            font-weight: 900;
+            letter-spacing: 3px;
+        }
+        .loading-circle {
+            width: 45px;
+            height: 45px;
+            border: 4px solid #333333;
+            border-top-color: var(--jaune);
+            border-radius: 50%;
+            animation: mobilusRotate 0.8s linear infinite;
+        }
+        .loading-text {
+            color: #aaaaaa;
+            font-size: 11px;
+            letter-spacing: 2px;
+        }
+        @keyframes mobilusRotate {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        @keyframes logoPulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.05);
+                opacity: 0.8;
+            }
+        }
+        /* CHARGEMENT SANS LOGO */
+        #mobilus-loading.no-logo .loading-logo,
+        #mobilus-loading.no-logo .loading-wordmark,
+        #mobilus-loading.no-logo .loading-text {
+            display: none;
+        }
+        /* MENU QUI DISPARAÎT AU DÉFILEMENT */
+        .header.mobilus-cache {
+            transform: translateY(-110%);
+        }
+        .bottom-nav.mobilus-cache {
+            transform: translateY(110%);
+        }
+        /* PIED DE PAGE */
+        .footer {
+            padding: 30px 18px;
+            text-align: center;
+            border-top: 1px solid #242424;
+            color: #777777;
+            font-size: 11px;
+            line-height: 1.8;
+        }
+        .footer strong {
+            color: white;
+        }
+        .footer .footer-red {
+            color: var(--rouge-clair);
+        }
+        /* ÉCRANS PLUS GRANDS */
+        @media (min-width: 600px) {
+            .hero {
+                padding: 65px 35px;
+                min-height: 380px;
+            }
+            .section,
+            .search-section {
+                padding-left: 28px;
+                padding-right: 28px;
+            }
+            .movie-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 20px;
+            }
+            .logo-texte {
+                font-size: 27px;
+            }
+        }
+        @media (min-width: 900px) {
+            .movie-grid {
+                grid-template-columns: repeat(5, minmax(0, 1fr));
+            }
+            .hero {
+                border-radius: 0 0 18px 18px;
+            }
+            .bottom-nav {
+                padding-left: 20%;
+                padding-right: 20%;
+            }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .header,
+            .bottom-nav,
+            #mobilus-loading {
+                transition: none;
+            }
+            .loading-logo,
+            .loading-circle {
+                animation-duration: 2s;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- CHARGEMENT MOBILUS -->
+    <div id="mobilus-loading" aria-hidden="true">
+        <div class="loading-content">
+            <img
+                src="mobilus.png"
+                alt="MOBILUS"
+                class="loading-logo"
+                onerror="this.style.display='none'"
+            >
+            <div class="loading-wordmark">
+                M<span class="lettre-rouge">O</span>BILUS
+            </div>
+            <div class="loading-circle"></div>
+            <p class="loading-text">
+                YOUR CINEMA, EVERYWHERE
+            </p>
+        </div>
+    </div>
+    <!-- EN-TÊTE -->
+    <header class="header">
+        <a href="index.html" class="logo-container" id="logoAccueil">
+            <img
+                src="mobilus.png"
+                alt="Logo MOBILUS"
+                class="logo-image"
+                onerror="this.style.display='none'"
+            >
+            <div>
+                <div class="logo-texte">
+                    M<span class="lettre-rouge">O</span>BILUS
+                </div>
+                <span class="slogan">
+                    YOUR CINEMA, EVERYWHERE
+                </span>
+            </div>
+        </a>
+        <a href="profil.html"
+           class="bouton-profil"
+           aria-label="Mon profil">
+            <svg width="22" height="22"
+                 viewBox="0 0 24 24"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="1.8">
+                <circle cx="12" cy="8" r="4"></circle>
+                <path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"></path>
+            </svg>
+        </a>
+    </header>
+    <main>
+        <!-- ACCUEIL -->
+        <section class="hero" id="accueil">
+            <div class="hero-contenu">
+                <p class="hero-label">
+                    TON UNIVERS CINÉMA
+                </p>
+                <h1>
+                    Le cinéma<br>sans limites.
+                </h1>
+                <p class="hero-description">
+                    Retrouve tes films, tes séries et tes univers préférés
+                    dans un espace pensé pour toi.
+                </p>
+                <div class="hero-actions">
+                    <a href="#catalogue" class="bouton-principal">
+                        ▶ Explorer les films
+                    </a>
+                    <a href="#categories" class="bouton-secondaire">
+                        Catégories
+                    </a>
+                </div>
+                <a
+                    href="https://whatsapp.com/channel/0029Vb99iKk4CrflOjzQH12U"
+                    class="whatsapp-channel"
+                    target="_blank"
+                    rel="noopener noreferrer">
+                    <span class="whatsapp-icon">✆</span>
+                    <span>
+                        Rejoindre notre chaîne WhatsApp
+                    </span>
+                </a>
+            </div>
+        </section>
+        <!-- RECHERCHE -->
+        <section class="search-section" id="recherche">
+            <label class="search-box" for="searchInput">
+                <span class="search-icon">⌕</span>
+                <input
+                    type="search"
+                    id="searchInput"
+                    placeholder="Rechercher un film ou une série..."
+                    autocomplete="off"
+                >
+            </label>
+        </section>
+        <!-- CATÉGORIES -->
+        <section class="section" id="categories">
+            <div class="section-heading">
+                <div>
+                    <h2>Catégories</h2>
+                    <p>Choisis ton univers préféré</p>
+                </div>
+            </div>
+            <div class="categories-list" id="categoriesList">
+                <button class="category-btn active"
+                        data-category="Tous"
+                        onclick="filtrerCategorie('Tous', this)">
+                    Tous
+                </button>
+                <button class="category-btn"
+                        data-category="Action"
+                        onclick="filtrerCategorie('Action', this)">
+                    Action
+                </button>
+                <button class="category-btn"
+                        data-category="Aventure"
+                        onclick="filtrerCategorie('Aventure', this)">
+                    Aventure
+                </button>
+                <button class="category-btn"
+                        data-category="Comédie"
+                        onclick="filtrerCategorie('Comédie', this)">
+                    Comédie
+                </button>
+                <button class="category-btn"
+                        data-category="Animation"
+                        onclick="filtrerCategorie('Animation', this)">
+                    Animation
+                </button>
+                <button class="category-btn"
+                        data-category="Science-fiction"
+                        onclick="filtrerCategorie('Science-fiction', this)">
+                    Science-fiction
+                </button>
+                <button class="category-btn"
+                        data-category="Drame"
+                        onclick="filtrerCategorie('Drame', this)">
+                    Drame
+                </button>
+                <button class="category-btn"
+                        data-category="Horreur"
+                        onclick="filtrerCategorie('Horreur', this)">
+                    Horreur
+                </button>
+            </div>
+        </section>
+        <!-- CATALOGUE DES FILMS -->
+        <section class="section" id="catalogue">
+            <div class="section-heading">
+                <div>
+                    <h2>Découvrir</h2>
+                    <p>Films et séries disponibles sur MOBILUS</p>
+                </div>
+                <a href="#recherche" class="section-link">
+                    Rechercher ⌕
+                </a>
+            </div>
+            <div id="movieGrid" class="movie-grid">
+                <p class="empty-message">
+                    Chargement du catalogue...
+                </p>
+            </div>
+        </section>
+        <!-- CATÉGORIES SUPPLÉMENTAIRES -->
+        <section class="section" id="categoriesSection">
+            <div class="section-heading">
+                <div>
+                    <h2>À explorer</h2>
+                    <p>Retrouve les différents univers</p>
+                </div>
+            </div>
+            <div class="info-card">
+                <p>
+                    Action, aventure, comédie, animation, science-fiction,
+                    drame et horreur : utilise les catégories en haut de
+                    la page pour trouver ce qui te plaît.
+                </p>
+                <a href="#categories">
+                    Voir les catégories →
+                </a>
+            </div>
+        </section>
+        <!-- SECTION TV -->
+        <section class="section" id="tv">
+            <div class="section-heading">
+                <div>
+                    <h2>TV & Séries</h2>
+                    <p>Retrouve tes séries préférées</p>
+                </div>
+            </div>
+            <div class="info-card">
+                <p>
+                    Découvre les séries du catalogue MOBILUS.
+                    Utilise la recherche pour retrouver un titre.
+                </p>
+                <a href="#catalogue">
+                    Explorer le catalogue →
+                </a>
+            </div>
+        </section>
+        <!-- SECTION RÉCENTS -->
+        <section class="section" id="recent">
+            <div class="section-heading">
+                <div>
+                    <h2>Récemment consultés</h2>
+                    <p>Continue à explorer MOBILUS</p>
+                </div>
+            </div>
+            <div class="info-card">
+                <p>
+                    Consulte ton historique pour retrouver les films et
+                    les séries que tu as récemment ouverts.
+                </p>
+                <a href="recents.html">
+                    Voir mon historique →
+                </a>
+            </div>
+        </section>
+        <!-- FAVORIS -->
+        <section class="section" id="favoris">
+            <div class="section-heading">
+                <div>
+                    <h2>Mes favoris</h2>
+                    <p>Les titres que tu souhaites retrouver</p>
+                </div>
+            </div>
+            <div class="info-card">
+                <p>
+                    Ajoute des films à tes favoris depuis le catalogue
+                    pour les retrouver facilement.
+                </p>
+            </div>
+        </section>
+        <!-- PROFIL -->
+        <section class="section" id="profil">
+            <div class="section-heading">
+                <div>
+                    <h2>Mon espace</h2>
+                    <p>Gère ton compte MOBILUS</p>
+                </div>
+            </div>
+            <div class="info-card">
+                <p>
+                    Accède à ton profil pour consulter les informations
+                    de ton compte et les options disponibles.
+                </p>
+                <a href="profil.html">
+                    Ouvrir mon profil →
+                </a>
+            </div>
+        </section>
+    </main>
+    <!-- PIED DE PAGE -->
+    <footer class="footer">
+        <p>
+            <strong>
+                M<span class="footer-red">O</span>BILUS
+            </strong>
+            — YOUR CINEMA, EVERYWHERE
+        </p>
+        <p>
+            © <span id="anneeActuelle"></span>
+            MOBILUS. Tous droits réservés.
+        </p>
+    </footer>
+    <!-- MENU INFÉRIEUR -->
+    <nav class="bottom-nav" aria-label="Navigation principale">
+        <a href="index.html"
+           class="nav-item active"
+           id="navAccueil"
+           data-destination="index.html">
+            <svg viewBox="0 0 24 24">
+                <path d="m3 10 9-7 9 7"></path>
+                <path d="M5 9v12h14V9"></path>
+                <path d="M9 21v-7h6v7"></path>
+            </svg>
+            <span>Accueil</span>
+        </a>
+        <a href="telechargements.html"
+           class="nav-item"
+           id="navTelechargements"
+           data-destination="telechargements.html">
+            <svg viewBox="0 0 24 24">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <path d="m7 10 5 5 5-5"></path>
+                <path d="M12 15V3"></path>
+            </svg>
+            <span>Téléchargements</span>
+        </a>
+        <a href="recents.html"
+           class="nav-item"
+           id="navRecent"
+           data-destination="recents.html">
+            <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="9"></circle>
+                <path d="M12 7v5l3 2"></path>
+            </svg>
+            <span>Récents</span>
+        </a>
+        <a href="profil.html"
+           class="nav-item"
+           id="navProfil"
+           data-destination="profil.html">
+            <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="8" r="4"></circle>
+                <path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"></path>
+            </svg>
+            <span>Profil</span>
+        </a>
+    </nav>
+    <!-- SCRIPTS -->
+    <script>
+        /* PROTECTION DE LA CONNEXION */
+        if (localStorage.getItem("mobilusConnecte") !== "oui") {
+            window.location.replace("connexion.html");
+        }
+        /* ANNÉE AUTOMATIQUE */
+        document.getElementById("anneeActuelle").textContent =
+            new Date().getFullYear();
+        /* CHARGEMENT INITIAL : 5 SECONDES */
+        const mobilusLoading =
+            document.getElementById("mobilus-loading");
+        window.addEventListener("load", function () {
+            setTimeout(function () {
+                mobilusLoading.classList.add("hidden");
+                mobilusLoading.classList.remove("no-logo");
+                mobilusLoading.setAttribute("aria-hidden", "true");
+            }, 5000);
+        });
+        /* NAVIGATION : 3 SECONDES */
+        let navigationEnCours = false;
+        document.querySelectorAll(
+            "#navAccueil, #navTelechargements, #navRecent, #navProfil"
+        ).forEach(function (lien) {
+            lien.addEventListener("click", function (event) {
+                event.preventDefault();
+                if (navigationEnCours) {
+                    return;
+                }
+                const destination =
+                    lien.getAttribute("data-destination") ||
+                    lien.getAttribute("href");
+                if (!destination) {
+                    return;
+                }
+                navigationEnCours = true;
+                /* Retirer le logo et le slogan */
+                mobilusLoading.classList.add("no-logo");
+                mobilusLoading.classList.remove("hidden");
+                mobilusLoading.setAttribute("aria-hidden", "false");
+                setTimeout(function () {
+                    window.location.href = destination;
+                }, 3000);
+            });
+        });
+        /* DÉFILEMENT : MASQUER ET RÉAFFICHER LE MENU */
+        let dernierePosition = window.scrollY;
+        let defilementEnCours = false;
+        const headerMobilus =
+            document.querySelector(".header");
+        const menuMobilus =
+            document.querySelector(".bottom-nav");
+        window.addEventListener("scroll", function () {
+            if (defilementEnCours) {
+                return;
+            }
+            defilementEnCours = true;
+            requestAnimationFrame(function () {
+                const positionActuelle = window.scrollY;
+                const difference =
+                    positionActuelle - dernierePosition;
+                if (positionActuelle < 80) {
+                    headerMobilus.classList.remove("mobilus-cache");
+                    menuMobilus.classList.remove("mobilus-cache");
+                } else if (difference > 5) {
+                    headerMobilus.classList.add("mobilus-cache");
+                    menuMobilus.classList.add("mobilus-cache");
+                } else if (difference < -5) {
+                    headerMobilus.classList.remove("mobilus-cache");
+                    menuMobilus.classList.remove("mobilus-cache");
+                }
+                dernierePosition = positionActuelle;
+                defilementEnCours = false;
+            });
+        }, { passive: true });
+    </script>
+    <script src="films.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
