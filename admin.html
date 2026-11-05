@@ -23,6 +23,9 @@
         <a href="#paiementSection" class="nav-link">
             <span>▤</span> Paiements
         </a>
+        <a href="#demandesContenu" class="nav-link">
+    <span>＋</span> Demandes de contenus
+        </a>
         <a href="#gestionUtilisateurs" class="nav-link">
             <span>♙</span> Utilisateurs
         </a>
@@ -136,6 +139,38 @@
     </section>
     <!-- GESTION DES UTILISATEURS -->
     <!-- admin-utilisateurs.js insère son panneau après les paiements -->
+    <!-- GESTION DES DEMANDES DE CONTENUS -->
+<section class="panel" id="demandesContenu">
+    <div class="panel-heading">
+        <div>
+            <p class="eyebrow">DEMANDES DES UTILISATEURS</p>
+            <h2>Demandes de films et séries</h2>
+            <p class="panel-description">
+                Consulte et traite les contenus demandés.
+            </p>
+        </div>
+        <button type="button"
+            id="actualiserDemandesContenu"
+            class="primary-button">
+            ↻ Actualiser
+        </button>
+    </div>
+    <div class="stats">
+        <div class="stat-card">
+            <span class="stat-icon">▤</span>
+            <div>
+                <p>Total des demandes</p>
+                <h2 id="totalDemandesContenu">0</h2>
+            </div>
+        </div>
+    </div>
+    <p id="demandesContenuMessage" aria-live="polite">
+        Chargement des demandes...
+    </p>
+    <div id="listeDemandesContenu"
+        class="demandes-paiement">
+    </div>
+</section>
     <!-- FORMULAIRE D'AJOUT -->
     <section class="panel" id="ajoutContenu">
         <div class="panel-heading">
@@ -342,6 +377,8 @@
 <script src="admin.js"></script>
 
 <script src="admin-paiements.js"></script>
+
+<script src="admin-demandes.js"></script>
 
 <script src="admin-utilisateurs.js"></script>
 </body>
