@@ -1,4 +1,4 @@
-name: Deploy MOBILUS
+name: Déploiement MOBILUS
 
 on:
   push:
@@ -14,24 +14,23 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Télécharger le dépôt
+      - name: Récupérer les fichiers MOBILUS
         uses: actions/checkout@v4
 
-      - name: Préparer les fichiers MOBILUS
+      - name: Préparer Firebase
         run: |
-          mkdir -p extracted public
-          unzip -q mobilus.zip -d extracted
-          INDEX_PATH=$(find extracted -name index.html -type f | head -n 1)
-          if [ -z "$INDEX_PATH" ]; then
-            echo "Erreur : index.html introuvable dans mobilus.zip"
-            exit 1
-          fi
-          SITE_DIR=$(dirname "$INDEX_PATH")
-          cp -R "$SITE_DIR"/. public/
-
-      - name: Configurer Firebase
-        run: |
-          echo '{"hosting":{"public":"public","ignore":["firebase.json","**/.*","**/node_modules/**"]}}' > firebase.json
+          echo '{
+            "hosting": {
+              "public": ".",
+              "ignore": [
+                "firebase.json",
+                "**/.*",
+                "**/node_modules/**",
+                "mobilus.zip",
+                "MOBILUS_Animation/**"
+              ]
+            }
+          }' > firebase.json
 
       - name: Publier MOBILUS
         uses: FirebaseExtended/action-hosting-deploy@v0
