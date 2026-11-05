@@ -114,82 +114,102 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     /* ======================================
-       CHARGEMENT SUPABASE
-    ====================================== */
+   CHARGEMENT SUPABASE
+====================================== */
 
-    async function chargerCatalogue() {
-        afficherMessage("Chargement des films et séries...");
+function avecDelai(promise, duree) {
+    let minuterie;
 
-        let essais = 0;
+    const delai = new Promise(function (_, reject) {
+        minuterie = setTimeout(function () {
+            reject(new Error(
+                "Supabase ne répond pas après 10 secondes."
+            ));
+        }, duree);
+    });
 
-        while (!window.mobilusDB && essais < 30) {
-            await new Promise(function (resolve) {
-                setTimeout(resolve, 300);
-            });
+    return Promise.race([promise, delai]).finally(function () {
+        clearTimeout(minuterie);
+    });
+}
 
-            essais++;
-        }
+async function chargerCatalogue() {
+    afficherMessage("Chargement des films et séries...");
 
-        if (!window.mobilusDB) {
-            console.warn("Supabase indisponible.");
+    let essais = 0;
 
-            utiliserCatalogueLocal();
-            return;
-        }
+    while (!window.mobilusDB && essais < 30) {
+        await new Promise(function (resolve) {
+            setTimeout(resolve, 300);
+        });
 
-        try {
-            const { data, error } = await window.mobilusDB
-                .from("contenus")
-                .select("*")
-                .eq("publie", true)
-                .order("created_at", { ascending: false });
-
-            if (error) {
-                throw error;
-            }
-
-            if (Array.isArray(data) && data.length > 0) {
-                catalogueFilms = data.map(normaliserFilm);
-
-                console.log(
-                    "MOBILUS : catalogue Supabase chargé.",
-                    catalogueFilms.length
-                );
-
-                afficherFilms();
-                return;
-            }
-
-            console.warn(
-                "Aucun contenu publié dans Supabase. Utilisation du catalogue local."
-            );
-
-            utiliserCatalogueLocal();
-
-        } catch (erreur) {
-            console.error("Erreur Supabase :", erreur);
-
-            utiliserCatalogueLocal();
-        }
+        essais++;
     }
 
-    function utiliserCatalogueLocal() {
-        catalogueFilms = recupererAncienCatalogue();
+    if (!window.mobilusDB) {
+        console.warn("Supabase indisponible.");
+        utiliserCatalogueLocal();
+        return;
+    }
 
-        if (catalogueFilms.length > 0) {
-            afficherFilms();
+    try {
+        const requete = window.mobilusDB
+            .from("contenus")
+            .select("*")
+            .eq("publie", true)
+            .order("created_at", { ascending: false });
+
+        const resultat = await avecDelai(requete, 10000);
+
+        const data = resultat.data;
+        const error = resultat.error;
+
+        if (error) {
+            throw error;
+        }
+
+        if (Array.isArray(data) && data.length > 0) {
+            catalogueFilms = data.map(normaliserFilm);
 
             console.log(
-                "MOBILUS : catalogue local chargé.",
+                "MOBILUS : catalogue Supabase chargé.",
                 catalogueFilms.length
             );
 
-        } else {
-            afficherMessage(
-                "Aucun contenu disponible pour le moment."
-            );
+            afficherFilms();
+            return;
         }
+
+        console.warn(
+            "Aucun contenu publié dans Supabase. Utilisation du catalogue local."
+        );
+
+        utiliserCatalogueLocal();
+
+    } catch (erreur) {
+        console.error("Erreur de chargement du catalogue :", erreur);
+
+        utiliserCatalogueLocal();
     }
+}
+
+function utiliserCatalogueLocal() {
+    catalogueFilms = recupererAncienCatalogue();
+
+    if (catalogueFilms.length > 0) {
+        afficherFilms();
+
+        console.log(
+            "MOBILUS : catalogue local chargé.",
+            catalogueFilms.length
+        );
+
+    } else {
+        afficherMessage(
+            "Aucun contenu disponible pour le moment."
+        );
+    }
+}
 
     /* ======================================
        FAVORIS
