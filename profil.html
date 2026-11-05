@@ -691,7 +691,17 @@
     <div id="historiquePaiements" class="liste-paiements"></div>
     <p class="message-donnees" id="messagePaiements" role="status">Chargement de l'historique...</p>
 </section>
-
+<section class="profile-section" id="sectionDemandesContenu">
+    <h2>Mes demandes de contenus</h2>
+    <p id="compteurDemandesContenu">
+        0 / 2 demandes utilisées ce mois
+    </p>
+    <p id="messageDemandesContenu" aria-live="polite">
+        Chargement...
+    </p>
+    <div id="mesDemandesContenu"></div>
+</section>
+    
 <div class="titre-section">
     <h2>Ma bibliothèque</h2>
     <span>Accès rapide</span>
@@ -1132,5 +1142,6 @@ $("deleteAccountButton").addEventListener("click",async function() {
 })();
 demarrer();
 </script>
+<script type="module" src="profil-demandes.js"></script>
 </body>
 </html>
