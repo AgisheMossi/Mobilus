@@ -1,12 +1,9 @@
 "use strict";
-/* =========================================
-   MOBILUS — COMMANDER UN CONTENU
-========================================= */
 document.addEventListener("DOMContentLoaded", function () {
     const recherche = document.getElementById("searchInput");
     const grille = document.getElementById("movieGrid");
     if (!recherche || !grille) {
-        console.error("MOBILUS : champ de recherche ou catalogue introuvable.");
+        console.error("MOBILUS : recherche ou catalogue introuvable.");
         return;
     }
     let panneau = null;
@@ -23,27 +20,28 @@ document.addEventListener("DOMContentLoaded", function () {
             supprimerPanneau();
             return;
         }
-        // Ne proposer une commande que si le catalogue est vide.
-        const cartes = grille.querySelectorAll(".movie-card, .film-card");
-        const messageVide = grille.textContent.toLowerCase().includes(
-            "aucun film ou série ne correspond"
+        const cartes = grille.querySelectorAll(
+            ".movie-card, .film-card"
         );
+        const messageVide = grille.textContent
+            .toLowerCase()
+            .includes("aucun film ou série ne correspond");
         if (cartes.length > 0 || !messageVide) {
             supprimerPanneau();
             return;
         }
+        if (panneau && panneau.isConnected) return;
         supprimerPanneau();
-        panneau = document.createElement("div");
+        panneau = document.createElement("section");
         panneau.className = "commande-contenu-panel";
         panneau.style.cssText =
             "margin:20px 0;padding:22px;background:#151515;" +
             "border:1px solid #b80016;border-radius:14px;color:white;";
         const titrePanel = document.createElement("h3");
         titrePanel.textContent = "Tu ne trouves pas ton contenu ?";
-        titrePanel.style.marginBottom = "10px";
         const description = document.createElement("p");
         description.textContent =
-            "Tu peux demander à MOBILUS d'ajouter ce film ou cette série.";
+            "Demande à MOBILUS d'ajouter ce film ou cette série.";
         const choix = document.createElement("select");
         choix.style.cssText =
             "width:100%;padding:13px;margin:15px 0;" +
@@ -99,6 +97,8 @@ document.addEventListener("DOMContentLoaded", function () {
                         data?.message ||
                         "Ta demande n'a pas pu être enregistrée."
                     );
+                    bouton.disabled = false;
+                    bouton.textContent = "Commander ce contenu";
                     return;
                 }
                 alert(
@@ -108,7 +108,6 @@ document.addEventListener("DOMContentLoaded", function () {
                     "/2\nDemandes restantes : " +
                     data.demandes_restantes
                 );
-                bouton.textContent = "Demande envoyée";
                 supprimerPanneau();
             } catch (erreur) {
                 console.error("MOBILUS — Demande :", erreur);
@@ -124,17 +123,15 @@ document.addEventListener("DOMContentLoaded", function () {
         panneau.appendChild(description);
         panneau.appendChild(choix);
         panneau.appendChild(bouton);
-        grille.appendChild(panneau);
+        // Le panneau est placé en dehors de la grille surveillée.
+        grille.insertAdjacentElement("afterend", panneau);
     }
-    recherche.addEventListener("input", function () {
+    function actualiser() {
         clearTimeout(minuterie);
-        minuterie = setTimeout(afficherPanneau, 250);
-    });
-    // Surveille les résultats produits par app.js.
-    const observateur = new MutationObserver(function () {
-        clearTimeout(minuterie);
-        minuterie = setTimeout(afficherPanneau, 100);
-    });
+        minuterie = setTimeout(afficherPanneau, 150);
+    }
+    recherche.addEventListener("input", actualiser);
+    const observateur = new MutationObserver(actualiser);
     observateur.observe(grille, {
         childList: true,
         subtree: true
