@@ -1,6 +1,8 @@
+
 /* ==========================================
    MOBILUS — APPLICATION PRINCIPALE
    Catalogue Supabase + catalogue local
+   TOP 10 basé sur nombre_vues
 ========================================== */
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -85,7 +87,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 contenu.emoji || "🎬",
 
             niveau_acces:
-                contenu.niveau_acces || "gratuit"
+                contenu.niveau_acces || "gratuit",
+
+            nombre_vues:
+                Number(contenu.nombre_vues || 0)
         };
     }
 
@@ -114,102 +119,395 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     /* ======================================
-   CHARGEMENT SUPABASE
-====================================== */
+       CHARGEMENT SUPABASE
+    ====================================== */
 
-function avecDelai(promise, duree) {
-    let minuterie;
+    function avecDelai(promise, duree) {
+        let minuterie;
 
-    const delai = new Promise(function (_, reject) {
-        minuterie = setTimeout(function () {
-            reject(new Error(
-                "Supabase ne répond pas après 10 secondes."
-            ));
-        }, duree);
-    });
-
-    return Promise.race([promise, delai]).finally(function () {
-        clearTimeout(minuterie);
-    });
-}
-
-async function chargerCatalogue() {
-    afficherMessage("Chargement des films et séries...");
-
-    let essais = 0;
-
-    while (!window.mobilusDB && essais < 30) {
-        await new Promise(function (resolve) {
-            setTimeout(resolve, 300);
+        const delai = new Promise(function (_, reject) {
+            minuterie = setTimeout(function () {
+                reject(new Error(
+                    "Supabase ne répond pas après 10 secondes."
+                ));
+            }, duree);
         });
 
-        essais++;
+        return Promise.race([promise, delai]).finally(function () {
+            clearTimeout(minuterie);
+        });
     }
 
-    if (!window.mobilusDB) {
-        console.warn("Supabase indisponible.");
-        utiliserCatalogueLocal();
-        return;
-    }
+    async function chargerCatalogue() {
+        afficherMessage("Chargement des films et séries...");
 
-    try {
-        const requete = window.mobilusDB
-            .from("contenus")
-            .select("*")
-            .eq("publie", true)
-            .order("created_at", { ascending: false });
+        let essais = 0;
 
-        const resultat = await avecDelai(requete, 10000);
+        while (!window.mobilusDB && essais < 30) {
+            await new Promise(function (resolve) {
+                setTimeout(resolve, 300);
+            });
 
-        const data = resultat.data;
-        const error = resultat.error;
-
-        if (error) {
-            throw error;
+            essais++;
         }
 
-        if (Array.isArray(data) && data.length > 0) {
-            catalogueFilms = data.map(normaliserFilm);
-
-            console.log(
-                "MOBILUS : catalogue Supabase chargé.",
-                catalogueFilms.length
-            );
-
-            afficherFilms();
+        if (!window.mobilusDB) {
+            console.warn("Supabase indisponible.");
+            utiliserCatalogueLocal();
             return;
         }
 
-        console.warn(
-            "Aucun contenu publié dans Supabase. Utilisation du catalogue local."
-        );
+        try {
+            const requete = window.mobilusDB
+                .from("contenus")
+                .select("*")
+                .eq("publie", true)
+                .order("created_at", { ascending: false });
 
-        utiliserCatalogueLocal();
+            const resultat = await avecDelai(requete, 10000);
 
-    } catch (erreur) {
-        console.error("Erreur de chargement du catalogue :", erreur);
+            const data = resultat.data;
+            const error = resultat.error;
 
-        utiliserCatalogueLocal();
+            if (error) {
+                throw error;
+            }
+
+            if (Array.isArray(data) && data.length > 0) {
+                catalogueFilms = data.map(normaliserFilm);
+
+                console.log(
+                    "MOBILUS : catalogue Supabase chargé.",
+                    catalogueFilms.length
+                );
+
+                afficherFilms();
+                afficherTop10();
+                return;
+            }
+
+            console.warn(
+                "Aucun contenu publié dans Supabase. Utilisation du catalogue local."
+            );
+
+            utiliserCatalogueLocal();
+
+        } catch (erreur) {
+            console.error("Erreur de chargement du catalogue :", erreur);
+
+            utiliserCatalogueLocal();
+        }
     }
-}
 
-function utiliserCatalogueLocal() {
-    catalogueFilms = recupererAncienCatalogue();
+    function utiliserCatalogueLocal() {
+        catalogueFilms = recupererAncienCatalogue();
 
-    if (catalogueFilms.length > 0) {
-        afficherFilms();
+        if (catalogueFilms.length > 0) {
+            afficherFilms();
+            afficherTop10();
 
-        console.log(
-            "MOBILUS : catalogue local chargé.",
-            catalogueFilms.length
-        );
+            console.log(
+                "MOBILUS : catalogue local chargé.",
+                catalogueFilms.length
+            );
 
-    } else {
-        afficherMessage(
-            "Aucun contenu disponible pour le moment."
-        );
+        } else {
+            afficherMessage(
+                "Aucun contenu disponible pour le moment."
+            );
+        }
     }
-}
+
+    /* ======================================
+       TOP 10 MOBILUS
+       Classement selon nombre_vues
+    ====================================== */
+
+    function installerStyleTop10() {
+        if (document.getElementById("mobilusTop10Style")) {
+            return;
+        }
+
+        const style = document.createElement("style");
+        style.id = "mobilusTop10Style";
+
+        style.textContent = `
+            .mobilus-top10-section {
+                width: 100%;
+                margin: 25px 0 35px;
+            }
+
+            .mobilus-top10-title {
+                color: #ffffff;
+                font-size: 22px;
+                font-weight: 900;
+                margin: 0 0 6px;
+                letter-spacing: .5px;
+            }
+
+            .mobilus-top10-title span {
+                color: #e50920;
+            }
+
+            .mobilus-top10-subtitle {
+                color: #999999;
+                font-size: 12px;
+                margin: 0 0 17px;
+            }
+
+            .mobilus-top10-grid {
+                display: grid;
+                grid-template-columns: repeat(
+                    auto-fill,
+                    minmax(135px, 1fr)
+                );
+                gap: 15px;
+            }
+
+            .mobilus-top10-card {
+                position: relative;
+                min-width: 0;
+                background: #141414;
+                border-radius: 10px;
+                overflow: hidden;
+                border: 1px solid #292929;
+            }
+
+            .mobilus-top10-card .movie-poster {
+                position: relative;
+                overflow: hidden;
+            }
+
+            .mobilus-top10-card .movie-poster img {
+                width: 100%;
+                display: block;
+                aspect-ratio: 2 / 3;
+                object-fit: cover;
+            }
+
+            .mobilus-top10-rank {
+                position: absolute;
+                z-index: 5;
+                top: 8px;
+                left: 8px;
+                width: 34px;
+                height: 34px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: #e50920;
+                color: #ffffff;
+                border: 2px solid #ffffff;
+                border-radius: 7px;
+                font-size: 17px;
+                font-weight: 900;
+                box-shadow: 0 3px 12px #00000088;
+            }
+
+            .mobilus-top10-views {
+                color: #ffd400;
+                font-size: 11px;
+                font-weight: bold;
+                margin-top: 7px;
+            }
+
+            .mobilus-top10-empty {
+                color: #999999;
+                font-size: 13px;
+                padding: 15px 0;
+            }
+
+            @media (max-width: 480px) {
+                .mobilus-top10-grid {
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                    gap: 12px;
+                }
+
+                .mobilus-top10-title {
+                    font-size: 20px;
+                }
+            }
+        `;
+
+        document.head.appendChild(style);
+    }
+
+    function installerSectionTop10() {
+        if (!movieGrid) return null;
+
+        let section = document.getElementById("mobilusTop10");
+
+        if (!section) {
+            section = document.createElement("section");
+            section.id = "mobilusTop10";
+            section.className = "mobilus-top10-section";
+
+            const titre = document.createElement("h2");
+            titre.className = "mobilus-top10-title";
+            titre.innerHTML = 'TOP <span>10</span> MOBILUS';
+
+            const sousTitre = document.createElement("p");
+            sousTitre.className = "mobilus-top10-subtitle";
+            sousTitre.textContent =
+                "Les films et séries les plus regardés.";
+
+            const grille = document.createElement("div");
+            grille.id = "mobilusTop10Grid";
+            grille.className = "mobilus-top10-grid";
+
+            section.appendChild(titre);
+            section.appendChild(sousTitre);
+            section.appendChild(grille);
+
+            movieGrid.parentNode.insertBefore(
+                section,
+                movieGrid
+            );
+        }
+
+        return section;
+    }
+
+    function creerCarteTop10(film, classement) {
+        const carte = document.createElement("article");
+
+        carte.className = "mobilus-top10-card";
+
+        const poster = document.createElement("div");
+        poster.className = "movie-poster";
+
+        const rang = document.createElement("span");
+        rang.className = "mobilus-top10-rank";
+        rang.textContent = classement;
+
+        poster.appendChild(rang);
+
+        if (film.image) {
+            const image = document.createElement("img");
+
+            image.src = film.image;
+            image.alt = "Affiche de " + film.title;
+            image.loading = "lazy";
+
+            image.onerror = function () {
+                image.style.display = "none";
+                poster.classList.add("poster-placeholder");
+                poster.appendChild(
+                    document.createTextNode(film.emoji)
+                );
+            };
+
+            poster.appendChild(image);
+
+        } else {
+            const placeholder = document.createElement("div");
+
+            placeholder.className = "poster-placeholder";
+            placeholder.textContent = film.emoji;
+
+            poster.appendChild(placeholder);
+        }
+
+        const badge = document.createElement("span");
+        badge.className = "movie-badge";
+        badge.textContent =
+            film.type === "serie" ? "SÉRIE" : "FILM";
+
+        poster.appendChild(badge);
+
+        const informations = document.createElement("div");
+        informations.className = "movie-info";
+
+        const titre = document.createElement("h3");
+        titre.textContent = film.title;
+
+        const vues = document.createElement("div");
+        vues.className = "mobilus-top10-views";
+        vues.textContent =
+            "▶ " + film.nombre_vues.toLocaleString("fr-FR") + " vues";
+
+        const actions = document.createElement("div");
+        actions.className = "movie-actions";
+
+        const bouton = document.createElement("button");
+        bouton.type = "button";
+        bouton.className = "play-btn";
+        bouton.textContent = "▶ Regarder";
+
+        bouton.addEventListener("click", function () {
+            regarderFilm(film.id);
+        });
+
+        const favori = document.createElement("button");
+        favori.type = "button";
+        favori.className = "favorite-btn";
+
+        function actualiserFavori() {
+            if (estFavori(film.id)) {
+                favori.textContent = "♥ Favori";
+                favori.style.color = "#ff405d";
+            } else {
+                favori.textContent = "♡ Favori";
+                favori.style.color = "white";
+            }
+        }
+
+        actualiserFavori();
+
+        favori.addEventListener("click", function () {
+            basculerFavori(film.id);
+        });
+
+        actions.appendChild(bouton);
+        actions.appendChild(favori);
+
+        informations.appendChild(titre);
+        informations.appendChild(vues);
+        informations.appendChild(actions);
+
+        carte.appendChild(poster);
+        carte.appendChild(informations);
+
+        return carte;
+    }
+
+    function afficherTop10() {
+        if (!movieGrid) return;
+
+        installerStyleTop10();
+
+        const section = installerSectionTop10();
+
+        if (!section) return;
+
+        const grille = document.getElementById("mobilusTop10Grid");
+
+        if (!grille) return;
+
+        grille.innerHTML = "";
+
+        const classement = catalogueFilms
+            .filter(function (film) {
+                return Number.isFinite(film.nombre_vues);
+            })
+            .slice()
+            .sort(function (a, b) {
+                return b.nombre_vues - a.nombre_vues;
+            })
+            .slice(0, 10);
+
+        if (classement.length === 0) {
+            grille.innerHTML =
+                '<p class="mobilus-top10-empty">Aucun classement disponible.</p>';
+            return;
+        }
+
+        classement.forEach(function (film, index) {
+            grille.appendChild(
+                creerCarteTop10(film, index + 1)
+            );
+        });
+    }
 
     /* ======================================
        FAVORIS
@@ -258,6 +556,11 @@ function utiliserCatalogueLocal() {
 
         enregistrerFavoris(favoris);
         afficherFilms();
+        afficherTop10();
+
+        if (document.getElementById("favoris")) {
+            afficherFavoris();
+        }
     }
 
     /* ======================================
