@@ -1,8 +1,8 @@
 
-/* ==========================================
+/* =========================================
    MOBILUS — APPLICATION PRINCIPALE
    Catalogue Supabase + catalogue local
-   TOP 10 basé sur nombre_vues
+   TOP 10 + NOMBRE DE VUES
 ========================================== */
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -30,6 +30,13 @@ document.addEventListener("DOMContentLoaded", function () {
             .trim();
     }
 
+    function formaterNombreVues(nombre) {
+        const vues = Math.max(0, Number(nombre) || 0);
+
+        return vues.toLocaleString("fr-FR") +
+            (vues === 1 ? " vue" : " vues");
+    }
+
     function afficherMessage(message) {
         if (!movieGrid) return;
 
@@ -47,6 +54,8 @@ document.addEventListener("DOMContentLoaded", function () {
     ====================================== */
 
     function normaliserFilm(contenu) {
+        const nombreVues = Number(contenu.nombre_vues);
+
         return {
             id: contenu.id,
 
@@ -90,7 +99,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 contenu.niveau_acces || "gratuit",
 
             nombre_vues:
-                Number(contenu.nombre_vues || 0)
+                Number.isFinite(nombreVues) && nombreVues >= 0
+                    ? nombreVues
+                    : 0
         };
     }
 
@@ -219,8 +230,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     /* ======================================
-       TOP 10 MOBILUS
-       Classement selon nombre_vues
+       STYLE DU TOP 10
     ====================================== */
 
     function installerStyleTop10() {
@@ -332,8 +342,12 @@ document.addEventListener("DOMContentLoaded", function () {
         document.head.appendChild(style);
     }
 
+    /* ======================================
+       SECTION TOP 10 MOBILUS
+    ====================================== */
+
     function installerSectionTop10() {
-        if (!movieGrid) return null;
+        if (!movieGrid || !movieGrid.parentNode) return null;
 
         let section = document.getElementById("mobilusTop10");
 
@@ -359,18 +373,18 @@ document.addEventListener("DOMContentLoaded", function () {
             section.appendChild(sousTitre);
             section.appendChild(grille);
 
-            movieGrid.parentNode.insertBefore(
-                section,
-                movieGrid
-            );
+            movieGrid.parentNode.insertBefore(section, movieGrid);
         }
 
         return section;
     }
 
+    /* ======================================
+       CARTE TOP 10
+    ====================================== */
+
     function creerCarteTop10(film, classement) {
         const carte = document.createElement("article");
-
         carte.className = "mobilus-top10-card";
 
         const poster = document.createElement("div");
@@ -424,7 +438,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const vues = document.createElement("div");
         vues.className = "mobilus-top10-views";
         vues.textContent =
-            "▶ " + film.nombre_vues.toLocaleString("fr-FR") + " vues";
+            "▶ " + formaterNombreVues(film.nombre_vues);
 
         const actions = document.createElement("div");
         actions.className = "movie-actions";
@@ -471,6 +485,10 @@ document.addEventListener("DOMContentLoaded", function () {
         return carte;
     }
 
+    /* ======================================
+       AFFICHER TOP 10
+    ====================================== */
+
     function afficherTop10() {
         if (!movieGrid) return;
 
@@ -487,9 +505,6 @@ document.addEventListener("DOMContentLoaded", function () {
         grille.innerHTML = "";
 
         const classement = catalogueFilms
-            .filter(function (film) {
-                return Number.isFinite(film.nombre_vues);
-            })
             .slice()
             .sort(function (a, b) {
                 return b.nombre_vues - a.nombre_vues;
@@ -690,7 +705,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     /* ======================================
-       CRÉATION DES CARTES
+       CRÉATION DES CARTES DU CATALOGUE
     ====================================== */
 
     function creerCarte(film) {
@@ -754,6 +769,20 @@ document.addEventListener("DOMContentLoaded", function () {
         meta.appendChild(annee);
         meta.appendChild(categorie);
 
+        /* NOUVEAU : NOMBRE DE VUES */
+
+        const vues = document.createElement("div");
+        vues.className = "mobilus-movie-views";
+        vues.textContent =
+            "▶ " + formaterNombreVues(film.nombre_vues);
+
+        vues.style.cssText = `
+            color: #ffd400;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 8px 0 10px;
+        `;
+
         const actions = document.createElement("div");
         actions.className = "movie-actions";
 
@@ -793,6 +822,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         informations.appendChild(titre);
         informations.appendChild(meta);
+        informations.appendChild(vues);
         informations.appendChild(actions);
 
         carte.appendChild(poster);
@@ -971,6 +1001,10 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     };
 
+    /* ======================================
+       AFFICHER LES FAVORIS
+    ====================================== */
+
     function afficherFavoris() {
         const section = document.getElementById("favoris");
 
@@ -1003,6 +1037,10 @@ document.addEventListener("DOMContentLoaded", function () {
             grille.appendChild(creerCarte(film));
         });
     }
+
+    /* ======================================
+       AFFICHER LES RÉCENTS
+    ====================================== */
 
     function afficherRecents() {
         const section = document.getElementById("recent");
