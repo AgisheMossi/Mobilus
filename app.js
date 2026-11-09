@@ -1,4 +1,5 @@
 
+
 /* =========================================
    MOBILUS — APPLICATION PRINCIPALE
    Catalogue Supabase + catalogue local
@@ -299,7 +300,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 position: absolute;
                 z-index: 5;
                 top: 8px;
-                left: 8px;
+                right: 8px;
                 width: 34px;
                 height: 34px;
                 display: flex;
@@ -768,8 +769,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
         meta.appendChild(annee);
         meta.appendChild(categorie);
-
-        /* NOUVEAU : NOMBRE DE VUES */
 
         const vues = document.createElement("div");
         vues.className = "mobilus-movie-views";
