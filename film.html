@@ -100,45 +100,28 @@ button,select {font:inherit;cursor:pointer}
 }
 .indicateur-video.cache {display:none}
 
-/* COMMANDES AVANCÉES */
 .commandes-video {
-    display:none;
-    flex-wrap:wrap;
-    align-items:center;
-    gap:10px;
-    padding:13px;
-    margin-bottom:18px;
-    background:#151515;
-    border:1px solid #292929;
+    display:none;flex-wrap:wrap;align-items:center;
+    gap:10px;padding:13px;margin-bottom:18px;
+    background:#151515;border:1px solid #292929;
     border-radius:9px;
 }
 .commandes-video.visible {display:flex}
 .commande-groupe {
-    display:flex;
-    flex-direction:column;
-    gap:6px;
-    flex:1 1 145px;
-    min-width:0;
+    display:flex;flex-direction:column;gap:6px;
+    flex:1 1 145px;min-width:0;
 }
+.commande-groupe[hidden] {display:none}
 .commande-groupe label {
-    color:#aaa;
-    font-size:11px;
-    font-weight:bold;
+    color:#aaa;font-size:11px;font-weight:bold;
     letter-spacing:.5px;
 }
 .commande-groupe select {
-    width:100%;
-    min-height:40px;
-    padding:8px 10px;
-    color:white;
-    background:#252525;
-    border:1px solid #444;
-    border-radius:6px;
-    outline:none;
+    width:100%;min-height:40px;padding:8px 10px;
+    color:white;background:#252525;
+    border:1px solid #444;border-radius:6px;outline:none;
 }
-.commande-groupe select:focus {
-    border-color:var(--rouge);
-}
+.commande-groupe select:focus {border-color:var(--rouge)}
 .etat-connexion {
     display:none;padding:12px;margin-bottom:18px;
     border-radius:7px;background:#351010;
@@ -224,7 +207,6 @@ footer {
         </div>
     </section>
 
-    <!-- QUALITÉ, SOUS-TITRES ET LANGUE AUDIO -->
     <section class="commandes-video" id="commandesVideo">
 
         <div class="commande-groupe" id="groupeQualite" hidden>
@@ -318,8 +300,15 @@ document.getElementById("anneeActuelle").textContent =
     new Date().getFullYear();
 
 let filmActuel = null;
-let urlVideoActuelle = "";
 let chargementTermine = false;
+let videoActuelle = null;
+let optionsActuelles = {
+    video_qualities:[],
+    subtitles:[],
+    audio_tracks:[]
+};
+let operationSource = 0;
+let operationSousTitres = 0;
 
 function terminerChargement() {
     if (chargementTermine) return;
@@ -328,7 +317,7 @@ function terminerChargement() {
     elements.chargement.classList.add("termine");
     document.body.classList.remove("chargement-actif");
 
-    setTimeout(function () {
+    setTimeout(function() {
         elements.chargement.remove();
     },350);
 }
@@ -353,7 +342,8 @@ function obtenirTitre(film) {
 }
 
 function obtenirDescription(film) {
-    return film.description || film.synopsis || film.resume || "Aucune description disponible.";
+    return film.description || film.synopsis || film.resume ||
+        "Aucune description disponible.";
 }
 
 function obtenirVideo(film) {
@@ -449,7 +439,12 @@ async function chargerContenu() {
         afficherInformations();
         enregistrerRecent();
         actualiserBoutonFavori();
-        afficherMessageVideo("Appuyez sur « Regarder le film » pour lancer la vidéo.",false);
+
+        afficherMessageVideo(
+            "Appuyez sur « Regarder le film » pour lancer la vidéo.",
+            false
+        );
+
         terminerChargement();
 
     } catch(erreur) {
@@ -626,80 +621,91 @@ function restaurerProgression(video) {
     }
 }
 
-/* OPTIONS DU LECTEUR */
+/* APPEL DE LA FONCTION EDGE */
 
-function estURLWeb(url) {
-    return typeof url === "string" && /^https?:\/\//i.test(url.trim());
-}
+async function obtenirLiensSecurises() {
+    const db = window.mobilusDB;
 
-function obtenirListeOptions(valeur) {
-    if (!valeur) return [];
-
-    let liste = [];
-
-    if (Array.isArray(valeur)) {
-        liste = valeur;
-    } else if (typeof valeur === "object") {
-        liste = Object.entries(valeur).map(function(entree) {
-            const cle = entree[0];
-            const element = entree[1];
-
-            if (typeof element === "string") {
-                return {label:cle,url:element};
-            }
-
-            return {...element,label:element.label || element.nom || cle};
-        });
+    if (!db) {
+        throw new Error("Connexion Supabase indisponible.");
     }
 
-    return liste.map(function(element) {
-        if (typeof element === "string") return null;
+    const sessionResultat = await db.auth.getSession();
 
-        const url = element.url || element.src || element.href ||
-            element.video_url || element.url_video || element.fichier || "";
+    if (sessionResultat.error || !sessionResultat.data.session) {
+        location.replace("connexion.html");
+        throw new Error("Votre session a expiré. Reconnectez-vous.");
+    }
 
-        const label = element.label || element.nom || element.name ||
-            element.qualite || element.quality || element.langue ||
-            element.language || "Option";
+    const resultat = await db.functions.invoke("obtenir-video",{
+        body:{
+            contenu_id:filmActuel.id
+        }
+    });
+
+    if (resultat.error) {
+        throw new Error(
+            resultat.error.message || "Impossible de contacter le serveur vidéo."
+        );
+    }
+
+    const data = resultat.data;
+
+    if (!data || data.success !== true || !data.video_url) {
+        throw new Error(
+            data && data.error
+                ? data.error
+                : "Le serveur n'a pas fourni de lien vidéo."
+        );
+    }
+
+    if (!estURLWeb(data.video_url)) {
+        throw new Error("Le lien vidéo sécurisé reçu est invalide.");
+    }
+
+    return data;
+}
+
+function estURLWeb(url) {
+    return typeof url === "string" &&
+        /^https?:\/\//i.test(url.trim());
+}
+
+function nettoyerOptions(liste) {
+    if (!Array.isArray(liste)) return [];
+
+    return liste.map(function(option) {
+        if (!option || typeof option !== "object") return null;
 
         return {
-            label:String(label),
-            url:String(url),
-            langue:element.langue || element.language || "",
-            code:element.code || element.srclang || "",
-            type:element.type || element.format || ""
+            label:String(option.label || option.nom || option.name || "Option"),
+            url:String(option.url || option.src || ""),
+            language:option.language || option.langue || option.srclang || "fr",
+            default:option.default === true
         };
-    }).filter(function(element) {
-        return element && estURLWeb(element.url);
+    }).filter(function(option) {
+        return option && estURLWeb(option.url);
     });
 }
 
-function obtenirOptionsQualite() {
-    return obtenirListeOptions(
-        filmActuel.video_qualities ||
-        filmActuel.qualites_video ||
-        filmActuel.qualities ||
-        filmActuel.sources ||
-        filmActuel.versions_video
-    );
-}
+/* COMMANDES DU LECTEUR */
 
-function obtenirOptionsSousTitres() {
-    return obtenirListeOptions(
-        filmActuel.subtitles ||
-        filmActuel.sous_titres ||
-        filmActuel.pistes_sous_titres ||
-        filmActuel.captions
-    );
-}
+function reinitialiserCommandes() {
+    elements.commandes.classList.remove("visible");
+    elements.groupeQualite.hidden = true;
+    elements.groupeSousTitres.hidden = true;
+    elements.groupeAudio.hidden = true;
 
-function obtenirOptionsAudio() {
-    return obtenirListeOptions(
-        filmActuel.audio_tracks ||
-        filmActuel.langues_audio ||
-        filmActuel.audio_languages ||
-        filmActuel.versions_audio
-    );
+    elements.qualite.innerHTML = "";
+    elements.sousTitres.innerHTML =
+        '<option value="-1">Désactivés</option>';
+    elements.audio.innerHTML = "";
+
+    optionsActuelles = {
+        video_qualities:[],
+        subtitles:[],
+        audio_tracks:[]
+    };
 }
 
 function ajouterOption(selecteur,label,valeur) {
@@ -709,82 +715,225 @@ function ajouterOption(selecteur,label,valeur) {
     selecteur.appendChild(option);
 }
 
-function reinitialiserCommandes() {
-    elements.commandes.classList.remove("visible");
-    elements.groupeQualite.hidden = true;
-    elements.groupeSousTitres.hidden = true;
-    elements.groupeAudio.hidden = true;
-
-    elements.qualite.innerHTML = "";
-    elements.sousTitres.innerHTML = '<option value="-1">Désactivés</option>';
-    elements.audio.innerHTML = "";
+function sauvegarderEtatVideo(video) {
+    return {
+        position:video.currentTime || 0,
+        lecture:!video.paused,
+        volume:video.volume,
+        muet:video.muted,
+        vitesse:video.playbackRate
+    };
 }
 
-function configurerCommandes(video) {
+function appliquerNouvelleSource(video,url,etat) {
+    if (!video || !estURLWeb(url)) {
+        throw new Error("Source vidéo invalide.");
+    }
+
+    const position = etat.position || 0;
+
+    video.src = url;
+    video.load();
+
+    video.addEventListener("loadedmetadata",function reprendre() {
+        video.removeEventListener("loadedmetadata",reprendre);
+
+        if (Number.isFinite(video.duration) &&
+            position < video.duration) {
+            video.currentTime = position;
+        }
+
+        video.volume = etat.volume;
+        video.muted = etat.muet;
+        video.playbackRate = etat.vitesse;
+
+        if (etat.lecture) {
+            video.play().catch(function() {});
+        }
+    });
+
+    afficherMessageVideo("Changement de source vidéo...",true);
+}
+
+async function changerSourceOption(video,type,index) {
+    if (!video || video !== videoActuelle) return;
+
+    const numeroOperation = ++operationSource;
+    const etat = sauvegarderEtatVideo(video);
+
+    try {
+        afficherMessageVideo("Préparation de cette version...",true);
+
+        // Renouvellement des URL signées avant chaque changement.
+        const data = await obtenirLiensSecurises();
+
+        if (numeroOperation !== operationSource ||
+            video !== videoActuelle) return;
+
+        let liste = [];
+
+        if (type === "qualite") {
+            liste = nettoyerOptions(data.video_qualities);
+        } else if (type === "audio") {
+            liste = nettoyerOptions(data.audio_tracks);
+        }
+
+        const option = liste[index];
+
+        if (!option) {
+            throw new Error("Cette option vidéo n'est plus disponible.");
+        }
+
+        optionsActuelles.video_qualities =
+            nettoyerOptions(data.video_qualities);
+
+        optionsActuelles.audio_tracks =
+            nettoyerOptions(data.audio_tracks);
+
+        appliquerNouvelleSource(video,option.url,etat);
+
+    } catch(erreur) {
+        console.error("Erreur changement de source :",erreur);
+        afficherMessageVideo(
+            erreur.message || "Impossible de changer cette source.",
+            false
+        );
+    }
+}
+
+async function changerSousTitres(video,index) {
+    if (!video || video !== videoActuelle) return;
+
+    const numeroOperation = ++operationSousTitres;
+
+    try {
+        if (index === -1) {
+            Array.from(video.textTracks).forEach(function(track) {
+                track.mode = "disabled";
+            });
+            return;
+        }
+
+        afficherMessageVideo("Chargement des sous-titres...",true);
+
+        // On renouvelle le lien privé avant de charger le fichier.
+        const data = await obtenirLiensSecurises();
+
+        if (numeroOperation !== operationSousTitres ||
+            video !== videoActuelle) return;
+
+        const liste = nettoyerOptions(data.subtitles);
+        const option = liste[index];
+
+        if (!option) {
+            throw new Error("Sous-titres indisponibles.");
+        }
+
+        let track = video.querySelector(
+            'track[data-mobilus-index="' + index + '"]'
+        );
+
+        if (!track) {
+            track = document.createElement("track");
+            track.kind = "subtitles";
+            track.dataset.mobilusIndex = String(index);
+            video.appendChild(track);
+        }
+
+        track.label = option.label;
+        track.srclang = option.language || "fr";
+        track.src = option.url;
+
+        track.track.mode = "disabled";
+
+        track.addEventListener("load",function activer() {
+            if (numeroOperation !== operationSousTitres) return;
+
+            Array.from(video.textTracks).forEach(function(piste) {
+                piste.mode = "disabled";
+            });
+
+            track.track.mode = "showing";
+            masquerMessageVideo();
+        },{once:true});
+
+        track.addEventListener("error",function() {
+            afficherMessageVideo(
+                "Impossible de charger ce fichier de sous-titres.",
+                false
+            );
+        },{once:true});
+
+    } catch(erreur) {
+        console.error("Erreur sous-titres :",erreur);
+        afficherMessageVideo(
+            erreur.message || "Impossible de charger les sous-titres.",
+            false
+        );
+    }
+}
+
+function configurerCommandes(video,data) {
     reinitialiserCommandes();
 
-    const qualites = obtenirOptionsQualite();
-    const sousTitres = obtenirOptionsSousTitres();
-    const languesAudio = obtenirOptionsAudio();
+    optionsActuelles.video_qualities =
+        nettoyerOptions(data.video_qualities);
 
-    /* QUALITÉ VIDÉO */
+    optionsActuelles.subtitles =
+        nettoyerOptions(data.subtitles);
+
+    optionsActuelles.audio_tracks =
+        nettoyerOptions(data.audio_tracks);
+
+    const qualites = optionsActuelles.video_qualities;
+    const sousTitres = optionsActuelles.subtitles;
+    const languesAudio = optionsActuelles.audio_tracks;
 
     if (qualites.length) {
         qualites.forEach(function(option,index) {
-            ajouterOption(elements.qualite,option.label,String(index));
+            ajouterOption(
+                elements.qualite,
+                option.label,
+                String(index)
+            );
         });
 
         elements.groupeQualite.hidden = false;
 
         elements.qualite.addEventListener("change",function() {
-            const option = qualites[Number(this.value)];
-            if (option) changerSourceVideo(video,option.url);
+            changerSourceOption(video,"qualite",Number(this.value));
         });
     }
 
-    /* SOUS-TITRES */
-
     if (sousTitres.length) {
         sousTitres.forEach(function(option,index) {
-            ajouterOption(elements.sousTitres,option.label,String(index));
+            ajouterOption(
+                elements.sousTitres,
+                option.label,
+                String(index)
+            );
         });
 
         elements.groupeSousTitres.hidden = false;
 
-        sousTitres.forEach(function(option,index) {
-            const track = document.createElement("track");
-            track.kind = "subtitles";
-            track.label = option.label;
-            track.srclang = option.code || option.langue || "fr";
-            track.src = option.url;
-            track.addEventListener("load",function() {
-                track.track.mode = Number(elements.sousTitres.value) === index
-                    ? "showing" : "disabled";
-            });
-            video.appendChild(track);
-        });
-
         elements.sousTitres.addEventListener("change",function() {
-            const indexChoisi = Number(this.value);
-
-            Array.from(video.textTracks).forEach(function(track,index) {
-                track.mode = index === indexChoisi ? "showing" : "disabled";
-            });
+            changerSousTitres(video,Number(this.value));
         });
     }
 
-    /* LANGUE AUDIO */
-
     if (languesAudio.length) {
         languesAudio.forEach(function(option,index) {
-            ajouterOption(elements.audio,option.label,String(index));
+            ajouterOption(
+                elements.audio,
+                option.label,
+                String(index)
+            );
         });
 
         elements.groupeAudio.hidden = false;
 
         elements.audio.addEventListener("change",function() {
-            const option = languesAudio[Number(this.value)];
-            if (option) changerSourceVideo(video,option.url);
+            changerSourceOption(video,"audio",Number(this.value));
         });
     }
 
@@ -793,40 +942,12 @@ function configurerCommandes(video) {
     }
 }
 
-/* CHANGEMENT DE SOURCE EN CONSERVANT LA POSITION */
-
-function changerSourceVideo(video,nouvelleURL) {
-    if (!video || !estURLWeb(nouvelleURL)) return;
-
-    const position = video.currentTime || 0;
-    const etaitEnLecture = !video.paused;
-    const volume = video.volume;
-    const muet = video.muted;
-    const vitesse = video.playbackRate;
-
-    video.src = nouvelleURL;
-    video.load();
-
-    video.addEventListener("loadedmetadata",function reprendre() {
-        video.removeEventListener("loadedmetadata",reprendre);
-
-        if (Number.isFinite(video.duration) && position < video.duration) {
-            video.currentTime = position;
-        }
-
-        video.volume = volume;
-        video.muted = muet;
-        video.playbackRate = vitesse;
-
-        if (etaitEnLecture) {
-            video.play().catch(function() {});
-        }
-    });
-}
-
-/* GESTION DU LECTEUR */
+/* LECTEUR */
 
 function supprimerAncienneVideo() {
+    operationSource++;
+    operationSousTitres++;
+
     const ancienneVideo = elements.lecteur.querySelector("video,iframe");
 
     if (ancienneVideo) {
@@ -835,9 +956,11 @@ function supprimerAncienneVideo() {
             ancienneVideo.removeAttribute("src");
             ancienneVideo.load();
         }
+
         ancienneVideo.remove();
     }
 
+    videoActuelle = null;
     reinitialiserCommandes();
 }
 
@@ -846,8 +969,9 @@ function afficherErreurLecture(message) {
     elements.reessayer.classList.add("visible");
 }
 
-function afficherLecteur(url,titre) {
+function afficherLecteur(url,titre,data) {
     supprimerAncienneVideo();
+
     elements.reessayer.classList.remove("visible");
 
     if (/youtube\.com|youtu\.be/i.test(url)) {
@@ -898,6 +1022,8 @@ function afficherLecteur(url,titre) {
     video.setAttribute("webkit-playsinline","");
     video.src = url;
 
+    videoActuelle = video;
+
     video.addEventListener("loadstart",function() {
         afficherMessageVideo("Chargement de la vidéo...",true);
     });
@@ -931,12 +1057,17 @@ function afficherLecteur(url,titre) {
     });
 
     video.addEventListener("error",function() {
-        afficherErreurLecture("Impossible de lire cette vidéo. Vérifiez que le fichier est accessible et réessayez.");
+        afficherErreurLecture(
+            "Impossible de lire cette vidéo. Vérifiez que le fichier est accessible et réessayez."
+        );
     });
 
     elements.lecteur.appendChild(video);
 
-    configurerCommandes(video);
+    // Les commandes reçoivent maintenant les URL signées
+    // retournées par la fonction Edge Function.
+    configurerCommandes(video,data);
+
     afficherMessageVideo("Chargement de la vidéo...",true);
 
     video.play().catch(function() {
@@ -946,9 +1077,23 @@ function afficherLecteur(url,titre) {
 
 /* LECTURE SÉCURISÉE */
 
+function estCheminPrive(url) {
+    if (typeof url !== "string") return false;
+
+    const chemin = url.trim();
+
+    return (
+        chemin.startsWith("mobilus-videos/") ||
+        chemin.startsWith("videos/")
+    );
+}
+
 async function regarderFilm() {
     if (!filmActuel || !navigator.onLine) {
-        afficherMessageVideo("Vérifiez votre connexion Internet avant de lancer le film.",false);
+        afficherMessageVideo(
+            "Vérifiez votre connexion Internet avant de lancer le film.",
+            false
+        );
         return;
     }
 
@@ -960,49 +1105,56 @@ async function regarderFilm() {
         const url = obtenirVideo(filmActuel);
 
         if (!url) {
-            afficherErreurLecture("Aucune vidéo n'est configurée pour ce contenu.");
-            return;
-        }
-
-        const db = window.mobilusDB;
-
-        if (!db) throw new Error("Connexion Supabase indisponible.");
-
-        const sessionResultat = await db.auth.getSession();
-
-        if (sessionResultat.error || !sessionResultat.data.session) {
-            location.replace("connexion.html");
+            afficherErreurLecture(
+                "Aucune vidéo n'est configurée pour ce contenu."
+            );
             return;
         }
 
         let urlFinale = url;
 
-        if (url.startsWith("mobilus-videos/")) {
-            const resultat = await db.functions.invoke("obtenir-video",{
-                body:{contenu_id:filmActuel.id}
-            });
+        let donneesSecurisees = {
+            video_qualities:[],
+            subtitles:[],
+            audio_tracks:[]
+        };
 
-            if (resultat.error) throw resultat.error;
+        const contenuPrive = estCheminPrive(url);
 
-            if (!resultat.data || !resultat.data.video_url) {
-                throw new Error("Le serveur n'a pas fourni de lien vidéo.");
-            }
+        const premium =
+            String(filmActuel.niveau_acces).toLowerCase() === "premium";
 
-            urlFinale = resultat.data.video_url;
+        if (premium && !contenuPrive) {
+            throw new Error(
+                "Cette vidéo Premium doit être stockée dans le bucket privé MOBILUS."
+            );
         }
 
-        if (
-            filmActuel.niveau_acces === "premium" &&
-            !url.startsWith("mobilus-videos/")
-        ) {
-            throw new Error("Cette vidéo Premium doit être stockée dans le stockage privé MOBILUS.");
+        if (contenuPrive) {
+            const resultat = await obtenirLiensSecurises();
+
+            urlFinale = resultat.video_url;
+
+            donneesSecurisees = {
+                video_qualities:resultat.video_qualities || [],
+                subtitles:resultat.subtitles || [],
+                audio_tracks:resultat.audio_tracks || []
+            };
+        } else if (!estURLWeb(url)) {
+            throw new Error(
+                "Le lien vidéo n'est pas reconnu. Vérifiez son adresse."
+            );
         }
 
-        urlVideoActuelle = urlFinale;
-        afficherLecteur(urlVideoActuelle,obtenirTitre(filmActuel));
+        afficherLecteur(
+            urlFinale,
+            obtenirTitre(filmActuel),
+            donneesSecurisees
+        );
 
     } catch(erreur) {
         console.error("Erreur lecture vidéo :",erreur);
+
         afficherErreurLecture(
             erreur.message ||
             "Impossible de lancer cette vidéo. Vérifiez votre abonnement ou réessayez."
@@ -1028,8 +1180,9 @@ elements.reessayer.addEventListener("click",function() {
 window.addEventListener("offline",function() {
     elements.connexion.classList.add("visible");
 
-    const video = elements.lecteur.querySelector("video");
-    if (video) sauvegarderProgression(video);
+    if (videoActuelle) {
+        sauvegarderProgression(videoActuelle);
+    }
 });
 
 window.addEventListener("online",function() {
@@ -1043,8 +1196,9 @@ if (!navigator.onLine) {
 /* SAUVEGARDE AVANT DE QUITTER */
 
 window.addEventListener("pagehide",function() {
-    const video = elements.lecteur.querySelector("video");
-    if (video) sauvegarderProgression(video);
+    if (videoActuelle) {
+        sauvegarderProgression(videoActuelle);
+    }
 });
 
 /* RETOUR */
