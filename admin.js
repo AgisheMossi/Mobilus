@@ -1,3 +1,4 @@
+
 "use strict";
 
 /* =========================================
@@ -54,6 +55,7 @@ let chargementTermine = false;
 
 const optionsSecurite = document.createElement("div");
 optionsSecurite.className = "form-grid";
+
 optionsSecurite.innerHTML = `
     <div class="field">
         <label for="niveauAcces">Accès au contenu *</label>
@@ -75,10 +77,10 @@ optionsSecurite.innerHTML = `
     </div>
 `;
 
-const divider = document.createElement("div");
-divider.className = "divider";
-
-form.insertBefore(optionsSecurite, form.querySelector(".divider"));
+form.insertBefore(
+    optionsSecurite,
+    form.querySelector(".divider")
+);
 
 const niveauAccesInput = document.getElementById("niveauAcces");
 const statutPublicationInput =
@@ -100,7 +102,8 @@ async function obtenirBase() {
         throw new Error("Connexion à Supabase impossible.");
     }
 
-    const { data, error } = await window.mobilusDB.auth.getSession();
+    const { data, error } =
+        await window.mobilusDB.auth.getSession();
 
     if (error || !data.session) {
         throw new Error("Ta session a expiré. Reconnecte-toi.");
@@ -153,6 +156,81 @@ function afficherErreur(erreur) {
 }
 
 /* =========================================
+   EXTRAIRE LE CHEMIN D'UNE VIDÉO SUPABASE
+========================================= */
+
+function extraireCheminVideoPrivee(lien) {
+    if (!lien) return "";
+
+    try {
+        const url = new URL(lien);
+
+        // Vérifier qu'il s'agit bien de ton projet Supabase.
+        if (
+            url.hostname !==
+            "uoxccezhznxmgggjupqd.supabase.co"
+        ) {
+            return "";
+        }
+
+        const parties = url.pathname.split("/");
+
+        // Format attendu :
+        // /storage/v1/object/sign/mobilus-videos/Videos/fichier.mp4
+
+        if (
+            parties[1] !== "storage" ||
+            parties[2] !== "v1" ||
+            parties[3] !== "object"
+        ) {
+            return "";
+        }
+
+        const typeLien = parties[4];
+
+        if (
+            typeLien !== "sign" &&
+            typeLien !== "authenticated" &&
+            typeLien !== "public"
+        ) {
+            return "";
+        }
+
+        const bucket = parties[5];
+
+        if (bucket !== "mobilus-videos") {
+            return "";
+        }
+
+        const cheminEncode = parties.slice(6).join("/");
+
+        if (!cheminEncode) {
+            return "";
+        }
+
+        const cheminFichier = decodeURIComponent(cheminEncode);
+
+        if (
+            !cheminFichier ||
+            cheminFichier.includes("..")
+        ) {
+            return "";
+        }
+
+        // Ne jamais enregistrer le jeton de signature.
+        return "mobilus-videos/" + cheminFichier;
+
+    } catch (erreur) {
+        console.error(
+            "Impossible d'extraire le chemin Supabase :",
+            erreur
+        );
+
+        return "";
+    }
+}
+
+/* =========================================
    CHARGER LES CONTENUS DEPUIS SUPABASE
 ========================================= */
 
@@ -178,6 +256,7 @@ async function chargerFilms() {
 
     } catch (erreur) {
         afficherErreur(erreur);
+
         filmsList.innerHTML =
             "<p>Impossible de charger le catalogue.</p>";
     }
@@ -309,7 +388,8 @@ async function televerserImage(fichier, db) {
         throw new Error("Le fichier d'affiche est invalide.");
     }
 
-    const extension = fichier.name.split(".").pop().toLowerCase();
+    const extension =
+        fichier.name.split(".").pop().toLowerCase();
 
     const nomFichier =
         crypto.randomUUID() + "." + extension;
@@ -343,7 +423,8 @@ async function televerserVideo(fichier, db) {
         throw new Error("Le fichier vidéo est invalide.");
     }
 
-    const extension = fichier.name.split(".").pop().toLowerCase();
+    const extension =
+        fichier.name.split(".").pop().toLowerCase();
 
     const nomFichier =
         crypto.randomUUID() + "." + extension;
@@ -371,10 +452,14 @@ function actualiserStatistiques() {
         films.length;
 
     document.getElementById("totalMovies").textContent =
-        films.filter(film => obtenirType(film) === "Film").length;
+        films.filter(
+            film => obtenirType(film) === "Film"
+        ).length;
 
     document.getElementById("totalSeries").textContent =
-        films.filter(film => obtenirType(film) === "Série").length;
+        films.filter(
+            film => obtenirType(film) === "Série"
+        ).length;
 }
 
 /* =========================================
@@ -384,7 +469,9 @@ function actualiserStatistiques() {
 function afficherCatalogue() {
     if (!chargementTermine) return;
 
-    const recherche = searchAdmin.value.trim().toLowerCase();
+    const recherche =
+        searchAdmin.value.trim().toLowerCase();
+
     const filtre = filterType.value;
 
     const resultats = films.filter(film => {
@@ -422,12 +509,14 @@ function afficherCatalogue() {
             img.loading = "lazy";
 
             img.onerror = () => {
-                const placeholder = document.createElement("div");
+                const placeholder =
+                    document.createElement("div");
 
                 placeholder.className =
                     "film-thumb film-thumb-placeholder";
 
-                placeholder.textContent = film.emoji || "🎬";
+                placeholder.textContent =
+                    film.emoji || "🎬";
 
                 img.replaceWith(placeholder);
             };
@@ -435,12 +524,14 @@ function afficherCatalogue() {
             ligne.appendChild(img);
 
         } else {
-            const placeholder = document.createElement("div");
+            const placeholder =
+                document.createElement("div");
 
             placeholder.className =
                 "film-thumb film-thumb-placeholder";
 
-            placeholder.textContent = film.emoji || "🎬";
+            placeholder.textContent =
+                film.emoji || "🎬";
 
             ligne.appendChild(placeholder);
         }
@@ -470,7 +561,11 @@ function afficherCatalogue() {
 
         acces.textContent =
             "Accès : " +
-            (film.niveau_acces === "premium" ? "PREMIUM" : "GRATUIT");
+            (
+                film.niveau_acces === "premium"
+                    ? "PREMIUM"
+                    : "GRATUIT"
+            );
 
         const publication = document.createElement("p");
         publication.className = "film-meta";
@@ -488,7 +583,8 @@ function afficherCatalogue() {
         );
 
         if (film.duree || film.langue || film.classification) {
-            const informations = document.createElement("p");
+            const informations =
+                document.createElement("p");
 
             informations.className = "film-meta";
 
@@ -522,7 +618,9 @@ function afficherCatalogue() {
             modifierFilm(film.id);
         });
 
-        const publicationButton = document.createElement("button");
+        const publicationButton =
+            document.createElement("button");
+
         publicationButton.type = "button";
         publicationButton.className = "edit-button";
 
@@ -534,7 +632,9 @@ function afficherCatalogue() {
             changerPublication(film);
         });
 
-        const featuredButton = document.createElement("button");
+        const featuredButton =
+            document.createElement("button");
+
         featuredButton.type = "button";
         featuredButton.className = "edit-button";
 
@@ -546,7 +646,9 @@ function afficherCatalogue() {
             choisirVedette(film);
         });
 
-        const deleteButton = document.createElement("button");
+        const deleteButton =
+            document.createElement("button");
+
         deleteButton.type = "button";
         deleteButton.className = "delete-button";
         deleteButton.textContent = "Supprimer";
@@ -574,11 +676,13 @@ function afficherCatalogue() {
 ========================================= */
 
 async function choisirVedette(film) {
-    const db = await obtenirBase();
-
     try {
+        const db = await obtenirBase();
+
         if (film.featured) {
-            if (!confirm("Retirer ce contenu de la une ?")) return;
+            if (!confirm(
+                "Retirer ce contenu de la une ?"
+            )) return;
 
             const { error } = await db
                 .from("contenus")
@@ -589,7 +693,8 @@ async function choisirVedette(film) {
 
         } else {
             if (!confirm(
-                "Mettre « " + obtenirTitre(film) + " » à la une ?"
+                "Mettre « " + obtenirTitre(film) +
+                " » à la une ?"
             )) return;
 
             const { error: retraitErreur } = await db
@@ -624,7 +729,8 @@ async function changerPublication(film) {
     const confirmation = confirm(
         nouveauStatut
             ? "Publier « " + obtenirTitre(film) + " » ?"
-            : "Retirer « " + obtenirTitre(film) + " » du catalogue public ?"
+            : "Retirer « " + obtenirTitre(film) +
+              " » du catalogue public ?"
     );
 
     if (!confirmation) return;
@@ -667,7 +773,11 @@ form.addEventListener("submit", async event => {
         return;
     }
 
-    if (!Number.isInteger(annee) || annee < 1900 || annee > 2100) {
+    if (
+        !Number.isInteger(annee) ||
+        annee < 1900 ||
+        annee > 2100
+    ) {
         alert("Saisis une année valide.");
         return;
     }
@@ -675,7 +785,9 @@ form.addEventListener("submit", async event => {
     const idExistant = filmIdInput.value;
 
     const ancienFilm = idExistant
-        ? films.find(film => String(film.id) === idExistant)
+        ? films.find(
+            film => String(film.id) === idExistant
+        )
         : null;
 
     const mode = modeSelectionne();
@@ -702,6 +814,7 @@ form.addEventListener("submit", async event => {
             if (imageFile) {
                 image = await televerserImage(imageFile, db);
             }
+
         } else {
             const imageUrl = imageUrlInput.value.trim();
 
@@ -709,7 +822,9 @@ form.addEventListener("submit", async event => {
                 image = urlValide(imageUrl);
 
                 if (!image) {
-                    throw new Error("Le lien de l'affiche est invalide.");
+                    throw new Error(
+                        "Le lien de l'affiche est invalide."
+                    );
                 }
             }
         }
@@ -727,25 +842,36 @@ form.addEventListener("submit", async event => {
             const videoUrl = videoUrlInput.value.trim();
 
             if (videoUrl) {
-                const acces = niveauAccesInput.value;
+                const cheminPrive =
+                    extraireCheminVideoPrivee(videoUrl);
 
-                if (acces === "premium") {
+                if (cheminPrive) {
+                    // Enregistrer uniquement le chemin,
+                    // jamais le jeton temporaire.
+                    video = cheminPrive;
+
+                } else if (
+                    niveauAccesInput.value === "premium"
+                ) {
                     throw new Error(
-                        "Pour un contenu Premium, utilise un fichier vidéo " +
-                        "téléversé dans le stockage privé MOBILUS. " +
-                        "Les liens vidéo publics ne sont pas protégés."
+                        "Lien vidéo Premium non reconnu. " +
+                        "Utilise un lien signé du bucket privé " +
+                        "mobilus-videos de ton projet Supabase."
                     );
-                }
 
-                video = urlValide(videoUrl);
+                } else {
+                    video = urlValide(videoUrl);
 
-                if (!video) {
-                    throw new Error("Le lien vidéo est invalide.");
+                    if (!video) {
+                        throw new Error(
+                            "Le lien vidéo est invalide."
+                        );
+                    }
                 }
             }
         }
 
-        /* CONTENU PREMIUM */
+        /* VÉRIFICATION DES VIDÉOS PREMIUM */
 
         if (
             niveauAccesInput.value === "premium" &&
@@ -753,14 +879,28 @@ form.addEventListener("submit", async event => {
             !video.startsWith("mobilus-videos/")
         ) {
             throw new Error(
-                "Une vidéo Premium doit être hébergée dans le stockage privé."
+                "Une vidéo Premium doit être hébergée " +
+                "dans le stockage privé MOBILUS."
             );
         }
+
+        if (
+            niveauAccesInput.value === "premium" &&
+            !video
+        ) {
+            throw new Error(
+                "Ajoute une vidéo Premium avant d'enregistrer."
+            );
+        }
+
+        /* DONNÉES DU CONTENU */
 
         const contenu = {
             titre: titre,
             annee: annee,
-            type: typeInput.value === "Série" ? "serie" : "film",
+            type: typeInput.value === "Série"
+                ? "serie"
+                : "film",
             categorie: categorieInput.value,
             emoji: emojiInput.value.trim() || "🎬",
             description: descriptionInput.value.trim(),
@@ -813,7 +953,8 @@ form.addEventListener("submit", async event => {
         alert(
             ancienFilm
                 ? "Le contenu a été modifié."
-                : "Le contenu a été enregistré comme brouillon."
+                : "Le contenu a été enregistré comme brouillon. " +
+                  "Tu peux maintenant cliquer sur Publier dans le catalogue."
         );
 
         reinitialiserFormulaire();
@@ -906,7 +1047,8 @@ function modifierFilm(id) {
     document.getElementById("formTitle").textContent =
         "Modifier un film ou une série";
 
-    saveButton.textContent = "Enregistrer les modifications";
+    saveButton.textContent =
+        "Enregistrer les modifications";
 
     cancelEditButton.classList.remove("hidden");
 
@@ -989,12 +1131,15 @@ function reinitialiserFormulaire() {
     actualiserMode();
     afficherImage("");
 
-    previewName.textContent = "Ton titre apparaîtra ici";
+    previewName.textContent =
+        "Ton titre apparaîtra ici";
 
     document.getElementById("formTitle").textContent =
         "Ajouter un film ou une série";
 
-    saveButton.textContent = "＋ Ajouter au catalogue";
+    saveButton.textContent =
+        "＋ Ajouter au catalogue";
+
     saveButton.disabled = false;
 
     cancelEditButton.classList.add("hidden");
@@ -1009,8 +1154,15 @@ cancelEditButton.addEventListener(
    RECHERCHE ET FILTRES
 ========================================= */
 
-searchAdmin.addEventListener("input", afficherCatalogue);
-filterType.addEventListener("change", afficherCatalogue);
+searchAdmin.addEventListener(
+    "input",
+    afficherCatalogue
+);
+
+filterType.addEventListener(
+    "change",
+    afficherCatalogue
+);
 
 /* =========================================
    INITIALISATION
