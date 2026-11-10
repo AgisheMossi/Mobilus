@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -99,7 +100,6 @@ button,select {font:inherit;cursor:pointer}
     animation:tourner .8s linear infinite;
 }
 .indicateur-video.cache {display:none}
-
 .commandes-video {
     display:none;flex-wrap:wrap;align-items:center;
     gap:10px;padding:13px;margin-bottom:18px;
@@ -189,7 +189,6 @@ footer {
 </header>
 
 <main class="conteneur">
-
     <span class="etiquette">TON UNIVERS CINÉMA</span>
 
     <h1 class="titre-principal" id="titreFilm">Chargement du film...</h1>
@@ -208,7 +207,6 @@ footer {
     </section>
 
     <section class="commandes-video" id="commandesVideo">
-
         <div class="commande-groupe" id="groupeQualite" hidden>
             <label for="choixQualite">QUALITÉ VIDÉO</label>
             <select id="choixQualite"></select>
@@ -225,7 +223,6 @@ footer {
             <label for="choixAudio">LANGUE AUDIO</label>
             <select id="choixAudio"></select>
         </div>
-
     </section>
 
     <div class="etat-connexion" id="etatConnexion">
@@ -252,7 +249,6 @@ footer {
             Aucune description disponible.
         </p>
     </section>
-
 </main>
 
 <footer>
@@ -300,13 +296,16 @@ document.getElementById("anneeActuelle").textContent =
     new Date().getFullYear();
 
 let filmActuel = null;
+let utilisateurActuel = null;
 let chargementTermine = false;
 let videoActuelle = null;
+
 let optionsActuelles = {
     video_qualities:[],
     subtitles:[],
     audio_tracks:[]
 };
+
 let operationSource = 0;
 let operationSousTitres = 0;
 
@@ -418,6 +417,8 @@ async function chargerContenu() {
             location.replace("connexion.html");
             return;
         }
+
+        utilisateurActuel = sessionResultat.data.session.user.id;
 
         const resultat = await db
             .from("contenus")
@@ -581,44 +582,116 @@ function convertirVimeo(url) {
     return "https://player.vimeo.com/video/" + resultat[1] + "?autoplay=1";
 }
 
-/* PROGRESSION */
+/* PROGRESSION AUTOMATIQUE */
 
 function obtenirCleProgression() {
-    return "mobilusProgression_" + obtenirIdentifiant(filmActuel);
+    return "mobilusProgression_" +
+        (utilisateurActuel || "invité") + "_" +
+        obtenirIdentifiant(filmActuel);
+}
+
+function lireProgression() {
+    try {
+        const valeur = localStorage.getItem(obtenirCleProgression());
+
+        if (!valeur) return 0;
+
+        // Compatibilité avec les anciennes sauvegardes numériques.
+        const anciennePosition = Number(valeur);
+
+        if (Number.isFinite(anciennePosition) && anciennePosition > 0) {
+            return anciennePosition;
+        }
+
+        const donnees = JSON.parse(valeur);
+        const position = Number(donnees.position);
+
+        return Number.isFinite(position) && position > 0
+            ? position
+            : 0;
+
+    } catch(erreur) {
+        return 0;
+    }
 }
 
 function sauvegarderProgression(video) {
-    if (!filmActuel || !video || !Number.isFinite(video.currentTime)) return;
+    if (!filmActuel || !video || !Number.isFinite(video.currentTime)) {
+        return;
+    }
 
     try {
-        if (video.currentTime > 0 && !video.ended) {
-            localStorage.setItem(obtenirCleProgression(),String(video.currentTime));
-        } else if (video.ended) {
+        if (video.ended) {
             localStorage.removeItem(obtenirCleProgression());
+            return;
         }
+
+        if (video.currentTime <= 0) return;
+
+        const donnees = {
+            position:video.currentTime,
+            duree:Number.isFinite(video.duration) ? video.duration : 0,
+            date:new Date().toISOString()
+        };
+
+        localStorage.setItem(
+            obtenirCleProgression(),
+            JSON.stringify(donnees)
+        );
+
     } catch(erreur) {
         console.warn("Progression non sauvegardée :",erreur);
     }
 }
 
 function restaurerProgression(video) {
-    try {
-        const sauvegarde = localStorage.getItem(obtenirCleProgression());
-        const position = Number(sauvegarde);
+    if (!video || video !== videoActuelle) return;
 
-        if (Number.isFinite(position) && position > 0 &&
-            (!Number.isFinite(video.duration) || position < video.duration - 5)) {
+    const position = lireProgression();
 
-            video.currentTime = position;
-            afficherMessageVideo("Reprise de votre lecture...",false);
+    if (position <= 0) return;
 
-            setTimeout(function() {
-                masquerMessageVideo();
-            },900);
-        }
-    } catch(erreur) {
-        console.warn("Reprise impossible :",erreur);
+    if (
+        Number.isFinite(video.duration) &&
+        video.duration > 0 &&
+        position >= video.duration - 5
+    ) {
+        localStorage.removeItem(obtenirCleProgression());
+        return;
     }
+
+    try {
+        video.currentTime = position;
+
+        afficherMessageVideo(
+            "Reprise de votre film à " +
+            formaterTemps(position) + "...",
+            false
+        );
+
+        setTimeout(function() {
+            if (video === videoActuelle) {
+                masquerMessageVideo();
+            }
+        },1200);
+
+    } catch(erreur) {
+        console.warn("Impossible de restaurer la position :",erreur);
+    }
+}
+
+function formaterTemps(secondes) {
+    secondes = Math.floor(secondes);
+
+    const heures = Math.floor(secondes / 3600);
+    const minutes = Math.floor((secondes % 3600) / 60);
+    const reste = secondes % 60;
+
+    if (heures > 0) {
+        return heures + "h " + minutes + "min";
+    }
+
+    return minutes + "min " + reste + "s";
 }
 
 /* APPEL DE LA FONCTION EDGE */
@@ -738,8 +811,10 @@ function appliquerNouvelleSource(video,url,etat) {
     video.addEventListener("loadedmetadata",function reprendre() {
         video.removeEventListener("loadedmetadata",reprendre);
 
-        if (Number.isFinite(video.duration) &&
-            position < video.duration) {
+        if (
+            Number.isFinite(video.duration) &&
+            position < video.duration - 1
+        ) {
             video.currentTime = position;
         }
 
@@ -762,9 +837,9 @@ async function changerSourceOption(video,type,index) {
     const etat = sauvegarderEtatVideo(video);
 
     try {
+        sauvegarderProgression(video);
         afficherMessageVideo("Préparation de cette version...",true);
 
-        // Renouvellement des URL signées avant chaque changement.
         const data = await obtenirLiensSecurises();
 
         if (numeroOperation !== operationSource ||
@@ -783,12 +858,6 @@ async function changerSourceOption(video,type,index) {
         if (!option) {
             throw new Error("Cette option vidéo n'est plus disponible.");
         }
-
-        optionsActuelles.video_qualities =
-            nettoyerOptions(data.video_qualities);
-
-        optionsActuelles.audio_tracks =
-            nettoyerOptions(data.audio_tracks);
 
         appliquerNouvelleSource(video,option.url,etat);
 
@@ -811,12 +880,12 @@ async function changerSousTitres(video,index) {
             Array.from(video.textTracks).forEach(function(track) {
                 track.mode = "disabled";
             });
+            masquerMessageVideo();
             return;
         }
 
         afficherMessageVideo("Chargement des sous-titres...",true);
 
-        // On renouvelle le lien privé avant de charger le fichier.
         const data = await obtenirLiensSecurises();
 
         if (numeroOperation !== operationSousTitres ||
@@ -843,7 +912,6 @@ async function changerSousTitres(video,index) {
         track.label = option.label;
         track.srclang = option.language || "fr";
         track.src = option.url;
-
         track.track.mode = "disabled";
 
         track.addEventListener("load",function activer() {
@@ -891,11 +959,7 @@ function configurerCommandes(video,data) {
 
     if (qualites.length) {
         qualites.forEach(function(option,index) {
-            ajouterOption(
-                elements.qualite,
-                option.label,
-                String(index)
-            );
+            ajouterOption(elements.qualite,option.label,String(index));
         });
 
         elements.groupeQualite.hidden = false;
@@ -907,11 +971,7 @@ function configurerCommandes(video,data) {
 
     if (sousTitres.length) {
         sousTitres.forEach(function(option,index) {
-            ajouterOption(
-                elements.sousTitres,
-                option.label,
-                String(index)
-            );
+            ajouterOption(elements.sousTitres,option.label,String(index));
         });
 
         elements.groupeSousTitres.hidden = false;
@@ -923,11 +983,7 @@ function configurerCommandes(video,data) {
 
     if (languesAudio.length) {
         languesAudio.forEach(function(option,index) {
-            ajouterOption(
-                elements.audio,
-                option.label,
-                String(index)
-            );
+            ajouterOption(elements.audio,option.label,String(index));
         });
 
         elements.groupeAudio.hidden = false;
@@ -952,6 +1008,7 @@ function supprimerAncienneVideo() {
 
     if (ancienneVideo) {
         if (ancienneVideo.tagName === "VIDEO") {
+            sauvegarderProgression(ancienneVideo);
             ancienneVideo.pause();
             ancienneVideo.removeAttribute("src");
             ancienneVideo.load();
@@ -1020,9 +1077,10 @@ function afficherLecteur(url,titre,data) {
     video.preload = "metadata";
     video.setAttribute("playsinline","");
     video.setAttribute("webkit-playsinline","");
-    video.src = url;
 
     videoActuelle = video;
+
+    let progressionRestauree = false;
 
     video.addEventListener("loadstart",function() {
         afficherMessageVideo("Chargement de la vidéo...",true);
@@ -1032,9 +1090,16 @@ function afficherLecteur(url,titre,data) {
         afficherMessageVideo("Mise en mémoire tampon...",true);
     });
 
+    // La restauration se fait lorsque les métadonnées sont disponibles.
+    video.addEventListener("loadedmetadata",function() {
+        if (progressionRestauree) return;
+
+        progressionRestauree = true;
+        restaurerProgression(video);
+    });
+
     video.addEventListener("canplay",function() {
         masquerMessageVideo();
-        restaurerProgression(video);
     });
 
     video.addEventListener("playing",function() {
@@ -1064,13 +1129,16 @@ function afficherLecteur(url,titre,data) {
 
     elements.lecteur.appendChild(video);
 
-    // Les commandes reçoivent maintenant les URL signées
-    // retournées par la fonction Edge Function.
     configurerCommandes(video,data);
 
     afficherMessageVideo("Chargement de la vidéo...",true);
 
+    video.src = url;
+    video.load();
+
     video.play().catch(function() {
+        // Certains navigateurs mobiles bloquent la lecture automatique.
+        // L'utilisateur peut alors utiliser le bouton Lecture du lecteur.
         masquerMessageVideo();
     });
 }
@@ -1201,17 +1269,22 @@ window.addEventListener("pagehide",function() {
     }
 });
 
-/* RETOUR */
+document.addEventListener("visibilitychange",function() {
+    if (document.visibilityState === "hidden" && videoActuelle) {
+        sauvegarderProgression(videoActuelle);
+    }
+});
+
+/* RETOUR DIRECT À L'ACCUEIL */
 
 elements.retour.addEventListener("click",function() {
-    if (
-        document.referrer &&
-        new URL(document.referrer).origin === location.origin
-    ) {
-        history.back();
-    } else {
-        location.href = "index.html";
+    if (videoActuelle) {
+        sauvegarderProgression(videoActuelle);
+        videoActuelle.pause();
     }
+
+    // Ne dépend plus de history.back().
+    location.replace("index.html");
 });
 
 /* DÉMARRAGE */
