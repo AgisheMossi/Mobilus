@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -71,10 +70,24 @@ button,select {font:inherit;cursor:pointer}
 }
 .informations {
     display:flex;flex-wrap:wrap;gap:10px;
-    color:var(--gris);font-size:13px;margin-bottom:22px;
+    color:var(--gris);font-size:13px;margin-bottom:15px;
 }
 .informations span {
     background:#191919;padding:6px 9px;border-radius:5px;
+}
+.compteur-vues {
+    display:inline-flex;align-items:center;gap:8px;
+    padding:9px 13px;margin-bottom:18px;
+    background:#191919;border:1px solid #343434;
+    border-radius:7px;color:#ccc;font-size:13px;
+}
+.compteur-vues[hidden] {display:none}
+.compteur-vues svg {
+    width:18px;height:18px;flex-shrink:0;
+    stroke:var(--jaune);
+}
+.compteur-vues strong {
+    color:var(--jaune);font-size:15px;
 }
 .lecteur {
     width:100%;aspect-ratio:16/9;background:#000;
@@ -199,6 +212,16 @@ footer {
         <span id="dureeFilm">Durée inconnue</span>
     </div>
 
+    <div class="compteur-vues" id="compteurVues" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round"
+             aria-hidden="true">
+            <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/>
+            <circle cx="12" cy="12" r="3"/>
+        </svg>
+        <span><strong id="nombreVues">0</strong> vues</span>
+    </div>
+
     <section class="lecteur" id="videoContainer" aria-label="Lecteur vidéo">
         <div class="message-video" id="messageVideo">
             <div class="indicateur-video" id="indicateurVideo"></div>
@@ -289,7 +312,9 @@ const elements = {
     groupeAudio:document.getElementById("groupeAudio"),
     qualite:document.getElementById("choixQualite"),
     sousTitres:document.getElementById("choixSousTitres"),
-    audio:document.getElementById("choixAudio")
+    audio:document.getElementById("choixAudio"),
+    compteurVues:document.getElementById("compteurVues"),
+    nombreVues:document.getElementById("nombreVues")
 };
 
 document.getElementById("anneeActuelle").textContent =
@@ -299,6 +324,13 @@ let filmActuel = null;
 let utilisateurActuel = null;
 let chargementTermine = false;
 let videoActuelle = null;
+let utilisateurPremium = false;
+
+/* ÉTAT DU COMPTAGE DES VUES */
+
+let sessionLectureId = null;
+let vueComptageEffectue = false;
+let comptageEnCours = false;
 
 let optionsActuelles = {
     video_qualities:[],
@@ -390,6 +422,61 @@ function normaliserContenu(contenu) {
     };
 }
 
+/* VÉRIFICATION DU COMPTE PREMIUM */
+
+async function verifierStatutPremium() {
+    utilisateurPremium = false;
+    elements.compteurVues.hidden = true;
+
+    const db = window.mobilusDB;
+
+    if (!db || !utilisateurActuel) return;
+
+    try {
+        const resultat = await db
+            .from("profils")
+            .select("type_acces,statut_abonnement,date_fin_abonnement")
+            .eq("id",utilisateurActuel)
+            .maybeSingle();
+
+        if (resultat.error) throw resultat.error;
+
+        const profil = resultat.data;
+
+        if (!profil) return;
+
+        const dateFin = profil.date_fin_abonnement
+            ? new Date(profil.date_fin_abonnement).getTime()
+            : 0;
+
+        utilisateurPremium =
+            String(profil.type_acces || "").toLowerCase() === "premium" &&
+            String(profil.statut_abonnement || "").toLowerCase() === "actif" &&
+            Number.isFinite(dateFin) &&
+            dateFin > Date.now();
+
+        if (utilisateurPremium && filmActuel) {
+            elements.nombreVues.textContent =
+                formaterNombreVues(filmActuel.nombre_vues);
+
+            elements.compteurVues.hidden = false;
+        }
+
+    } catch(erreur) {
+        console.error("Vérification Premium impossible :",erreur);
+        utilisateurPremium = false;
+        elements.compteurVues.hidden = true;
+    }
+}
+
+function formaterNombreVues(nombre) {
+    const valeur = Number(nombre);
+
+    if (!Number.isFinite(valeur) || valeur < 0) return "0";
+
+    return new Intl.NumberFormat("fr-FR").format(valeur);
+}
+
 async function chargerContenu() {
     const parametres = new URLSearchParams(location.search);
     const identifiantURL = parametres.get("id");
@@ -440,6 +527,8 @@ async function chargerContenu() {
         afficherInformations();
         enregistrerRecent();
         actualiserBoutonFavori();
+
+        await verifierStatutPremium();
 
         afficherMessageVideo(
             "Appuyez sur « Regarder le film » pour lancer la vidéo.",
@@ -596,7 +685,6 @@ function lireProgression() {
 
         if (!valeur) return 0;
 
-        // Compatibilité avec les anciennes sauvegardes numériques.
         const anciennePosition = Number(valeur);
 
         if (Number.isFinite(anciennePosition) && anciennePosition > 0) {
@@ -692,6 +780,93 @@ function formaterTemps(secondes) {
     }
 
     return minutes + "min " + reste + "s";
+}
+
+/* COMPTEUR DE VUES PAR SESSION */
+
+function genererIdentifiantSession() {
+    if (window.crypto && typeof window.crypto.randomUUID === "function") {
+        return window.crypto.randomUUID();
+    }
+
+    if (window.crypto && typeof window.crypto.getRandomValues === "function") {
+        const octets = new Uint8Array(16);
+        window.crypto.getRandomValues(octets);
+
+        octets[6] = (octets[6] & 0x0f) | 0x40;
+        octets[8] = (octets[8] & 0x3f) | 0x80;
+
+        const hex = Array.from(octets,function(octet) {
+            return octet.toString(16).padStart(2,"0");
+        }).join("");
+
+        return (
+            hex.slice(0,8) + "-" +
+            hex.slice(8,12) + "-" +
+            hex.slice(12,16) + "-" +
+            hex.slice(16,20) + "-" +
+            hex.slice(20)
+        );
+    }
+
+    throw new Error("Impossible de créer une session de lecture sécurisée.");
+}
+
+function preparerNouvelleSessionLecture() {
+    sessionLectureId = genererIdentifiantSession();
+    vueComptageEffectue = false;
+    comptageEnCours = false;
+}
+
+async function compterVuePremium() {
+    if (
+        !utilisateurPremium ||
+        !filmActuel ||
+        !sessionLectureId ||
+        vueComptageEffectue ||
+        comptageEnCours
+    ) {
+        return;
+    }
+
+    const db = window.mobilusDB;
+
+    if (!db) return;
+
+    comptageEnCours = true;
+
+    try {
+        const resultat = await db.rpc("demarrer_session_lecture",{
+            p_session_id:sessionLectureId,
+            p_contenu_id:filmActuel.id
+        });
+
+        if (resultat.error) {
+            throw resultat.error;
+        }
+
+        vueComptageEffectue = true;
+
+        if (resultat.data !== null && resultat.data !== undefined) {
+            const total = Number(resultat.data);
+
+            if (Number.isFinite(total)) {
+                elements.nombreVues.textContent =
+                    formaterNombreVues(total);
+            }
+        }
+
+        console.log("Vue MOBILUS comptabilisée.");
+
+    } catch(erreur) {
+        console.error("Erreur de comptage des vues :",erreur);
+
+        // Le lecteur continue même si le compteur rencontre une erreur.
+        // Une nouvelle tentative sera possible lors du prochain événement playing.
+
+    } finally {
+        comptageEnCours = false;
+    }
 }
 
 /* APPEL DE LA FONCTION EDGE */
@@ -1090,7 +1265,6 @@ function afficherLecteur(url,titre,data) {
         afficherMessageVideo("Mise en mémoire tampon...",true);
     });
 
-    // La restauration se fait lorsque les métadonnées sont disponibles.
     video.addEventListener("loadedmetadata",function() {
         if (progressionRestauree) return;
 
@@ -1105,6 +1279,11 @@ function afficherLecteur(url,titre,data) {
     video.addEventListener("playing",function() {
         masquerMessageVideo();
         elements.reessayer.classList.remove("visible");
+
+        // Le compteur est appelé une seule fois par session.
+        // Les pauses, reprises et changements de qualité ne créent
+        // pas de nouvelle vue.
+        compterVuePremium();
     });
 
     video.addEventListener("timeupdate",function() {
@@ -1137,8 +1316,6 @@ function afficherLecteur(url,titre,data) {
     video.load();
 
     video.play().catch(function() {
-        // Certains navigateurs mobiles bloquent la lecture automatique.
-        // L'utilisateur peut alors utiliser le bouton Lecture du lecteur.
         masquerMessageVideo();
     });
 }
@@ -1156,13 +1333,24 @@ function estCheminPrive(url) {
     );
 }
 
-async function regarderFilm() {
+async function regarderFilm(nouvelleSession) {
     if (!filmActuel || !navigator.onLine) {
         afficherMessageVideo(
             "Vérifiez votre connexion Internet avant de lancer le film.",
             false
         );
         return;
+    }
+
+    // Un nouveau clic sur Regarder crée une nouvelle session.
+    // Le bouton Réessayer conserve la session en cours.
+    if (nouvelleSession === true || !sessionLectureId) {
+        try {
+            preparerNouvelleSessionLecture();
+        } catch(erreur) {
+            afficherErreurLecture(erreur.message);
+            return;
+        }
     }
 
     elements.regarder.disabled = true;
@@ -1233,14 +1421,16 @@ async function regarderFilm() {
     }
 }
 
-elements.regarder.addEventListener("click",regarderFilm);
+elements.regarder.addEventListener("click",function() {
+    regarderFilm(true);
+});
 
 elements.reessayer.addEventListener("click",function() {
     if (!filmActuel) return;
 
     elements.reessayer.classList.remove("visible");
     supprimerAncienneVideo();
-    regarderFilm();
+    regarderFilm(false);
 });
 
 /* CONNEXION INTERNET */
@@ -1283,7 +1473,6 @@ elements.retour.addEventListener("click",function() {
         videoActuelle.pause();
     }
 
-    // Ne dépend plus de history.back().
     location.replace("index.html");
 });
 
