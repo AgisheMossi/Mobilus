@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -10,32 +11,41 @@
 </head>
 <body>
 <div class="admin-layout">
+
 <!-- NAVIGATION LATÉRALE -->
 <aside class="sidebar" id="sidebar">
     <a href="index.html" class="logo">
         MOBIL<span>O</span>US
     </a>
+
     <p class="sidebar-label">MENU PRINCIPAL</p>
+
     <nav class="sidebar-nav">
         <a href="#dashboard" class="nav-link active">
             <span>▦</span> Tableau de bord
         </a>
+
         <a href="#paiementSection" class="nav-link">
             <span>▤</span> Paiements
         </a>
+
         <a href="#demandesContenu" class="nav-link">
-    <span>＋</span> Demandes de contenus
+            <span>＋</span> Demandes de contenus
         </a>
+
         <a href="#gestionUtilisateurs" class="nav-link">
             <span>♙</span> Utilisateurs
         </a>
+
         <a href="#ajoutContenu" class="nav-link">
             <span>＋</span> Ajouter un contenu
         </a>
+
         <a href="#catalogue" class="nav-link">
             <span>▣</span> Catalogue
         </a>
     </nav>
+
     <div class="sidebar-bottom">
         <a href="index.html" class="sidebar-exit">
             <span>↗</span> Retour au site
@@ -43,14 +53,17 @@
         <p>© 2026 MOBILUS</p>
     </div>
 </aside>
+
 <!-- CONTENU PRINCIPAL -->
 <main class="main-content">
+
     <!-- EN-TÊTE -->
     <header class="admin-header">
         <div>
             <p class="header-subtitle">MOBILUS / ADMINISTRATION</p>
             <h1>Tableau de bord</h1>
         </div>
+
         <div class="admin-profile">
             <span class="admin-avatar">M</span>
             <div>
@@ -59,8 +72,10 @@
             </div>
         </div>
     </header>
+
     <!-- TABLEAU DE BORD -->
     <section id="dashboard" class="dashboard-section">
+
         <div class="welcome">
             <div>
                 <p class="eyebrow">ESPACE ADMINISTRATEUR</p>
@@ -69,13 +84,14 @@
             </div>
             <div class="welcome-mark">M</div>
         </div>
-        <!-- STATISTIQUES DU CATALOGUE -->
+
         <div class="section-heading">
             <div>
                 <p class="eyebrow">APERÇU GÉNÉRAL</p>
                 <h2>Statistiques du catalogue</h2>
             </div>
         </div>
+
         <section class="stats">
             <div class="stat-card">
                 <span class="stat-icon">▣</span>
@@ -84,6 +100,7 @@
                     <h2 id="totalFilms">0</h2>
                 </div>
             </div>
+
             <div class="stat-card">
                 <span class="stat-icon">▶</span>
                 <div>
@@ -91,6 +108,7 @@
                     <h2 id="totalMovies">0</h2>
                 </div>
             </div>
+
             <div class="stat-card">
                 <span class="stat-icon">▤</span>
                 <div>
@@ -100,8 +118,10 @@
             </div>
         </section>
     </section>
+
     <!-- GESTION DES PAIEMENTS -->
     <section class="panel" id="paiementSection">
+
         <div class="panel-heading">
             <div>
                 <p class="eyebrow">ABONNEMENTS MOBILUS</p>
@@ -110,12 +130,14 @@
                     Vérification et traitement des demandes.
                 </p>
             </div>
+
             <button type="button"
                 id="actualiserPaiements"
                 class="primary-button">
                 ↻ Actualiser
             </button>
         </div>
+
         <div class="stats payment-stats">
             <div class="stat-card">
                 <span class="stat-icon">▤</span>
@@ -124,6 +146,7 @@
                     <h2 id="totalDemandes">0</h2>
                 </div>
             </div>
+
             <div class="stat-card">
                 <span class="stat-icon">◷</span>
                 <div>
@@ -132,47 +155,58 @@
                 </div>
             </div>
         </div>
+
         <p id="paiementMessage" aria-live="polite">
             Appuie sur Actualiser pour charger les demandes.
         </p>
+
         <div id="demandesPaiement" class="demandes-paiement"></div>
     </section>
+
     <!-- GESTION DES UTILISATEURS -->
     <!-- admin-utilisateurs.js insère son panneau après les paiements -->
+
     <!-- GESTION DES DEMANDES DE CONTENUS -->
-<section class="panel" id="demandesContenu">
-    <div class="panel-heading">
-        <div>
-            <p class="eyebrow">DEMANDES DES UTILISATEURS</p>
-            <h2>Demandes de films et séries</h2>
-            <p class="panel-description">
-                Consulte et traite les contenus demandés.
-            </p>
-        </div>
-        <button type="button"
-            id="actualiserDemandesContenu"
-            class="primary-button">
-            ↻ Actualiser
-        </button>
-    </div>
-    <div class="stats">
-        <div class="stat-card">
-            <span class="stat-icon">▤</span>
+    <section class="panel" id="demandesContenu">
+
+        <div class="panel-heading">
             <div>
-                <p>Total des demandes</p>
-                <h2 id="totalDemandesContenu">0</h2>
+                <p class="eyebrow">DEMANDES DES UTILISATEURS</p>
+                <h2>Demandes de films et séries</h2>
+                <p class="panel-description">
+                    Consulte et traite les contenus demandés.
+                </p>
+            </div>
+
+            <button type="button"
+                id="actualiserDemandesContenu"
+                class="primary-button">
+                ↻ Actualiser
+            </button>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <span class="stat-icon">▤</span>
+                <div>
+                    <p>Total des demandes</p>
+                    <h2 id="totalDemandesContenu">0</h2>
+                </div>
             </div>
         </div>
-    </div>
-    <p id="demandesContenuMessage" aria-live="polite">
-        Chargement des demandes...
-    </p>
-    <div id="listeDemandesContenu"
-        class="demandes-paiement">
-    </div>
-</section>
+
+        <p id="demandesContenuMessage" aria-live="polite">
+            Chargement des demandes...
+        </p>
+
+        <div id="listeDemandesContenu"
+            class="demandes-paiement">
+        </div>
+    </section>
+
     <!-- FORMULAIRE D'AJOUT -->
     <section class="panel" id="ajoutContenu">
+
         <div class="panel-heading">
             <div>
                 <p class="eyebrow">GESTION DU CONTENU</p>
@@ -182,20 +216,26 @@
                 </p>
             </div>
         </div>
+
         <form id="filmForm">
+
             <input type="hidden" id="filmId">
+
             <div class="form-grid">
+
                 <div class="field full">
                     <label for="titre">Titre du film ou de la série *</label>
                     <input type="text" id="titre"
                         placeholder="Ex. : Le Royaume perdu" required>
                 </div>
+
                 <div class="field">
                     <label for="annee">Année de sortie *</label>
                     <input type="number" id="annee"
                         min="1900" max="2100"
                         placeholder="2026" required>
                 </div>
+
                 <div class="field">
                     <label for="type">Type de contenu *</label>
                     <select id="type" required>
@@ -203,6 +243,7 @@
                         <option value="Série">Série</option>
                     </select>
                 </div>
+
                 <div class="field">
                     <label for="categorie">Catégorie *</label>
                     <select id="categorie" required>
@@ -219,11 +260,13 @@
                         <option value="Autre">Autre</option>
                     </select>
                 </div>
+
                 <div class="field">
                     <label for="duree">Durée</label>
                     <input type="text" id="duree"
                         placeholder="2 h 15 min ou 3 saisons">
                 </div>
+
                 <div class="field">
                     <label for="langue">Langue</label>
                     <select id="langue">
@@ -235,6 +278,7 @@
                         <option value="Autre">Autre</option>
                     </select>
                 </div>
+
                 <div class="field">
                     <label for="classification">Classification d'âge</label>
                     <select id="classification">
@@ -246,18 +290,81 @@
                         <option value="-18 ans">-18 ans</option>
                     </select>
                 </div>
+
                 <div class="field">
                     <label for="emoji">Icône de remplacement</label>
                     <input type="text" id="emoji"
                         value="🎬" maxlength="10">
                 </div>
+
                 <div class="field full">
                     <label for="description">Description</label>
                     <textarea id="description" rows="4"
                         placeholder="Présente brièvement le film ou la série..."></textarea>
                 </div>
+
             </div>
+
+            <!-- GESTION DE L'INTRODUCTION -->
             <div class="divider"></div>
+
+            <h3>Passer l'introduction</h3>
+
+            <p class="panel-description">
+                Définis les moments entre lesquels le bouton
+                « Passer l'introduction » sera disponible pendant
+                la lecture du contenu.
+            </p>
+
+            <div class="form-grid">
+
+                <div class="field">
+                    <label for="introDebutSecondes">
+                        Début de l'introduction (secondes)
+                    </label>
+
+                    <input
+                        type="number"
+                        id="introDebutSecondes"
+                        min="0"
+                        step="1"
+                        placeholder="Ex. : 0"
+                    >
+
+                    <small>
+                        Moment où l'introduction commence.
+                    </small>
+                </div>
+
+                <div class="field">
+                    <label for="introFinSecondes">
+                        Fin de l'introduction (secondes)
+                    </label>
+
+                    <input
+                        type="number"
+                        id="introFinSecondes"
+                        min="0"
+                        step="1"
+                        placeholder="Ex. : 95"
+                    >
+
+                    <small>
+                        Moment où l'introduction se termine.
+                    </small>
+                </div>
+
+            </div>
+
+            <p class="panel-description">
+                Exemple : début à 0 seconde et fin à 95 secondes.
+                Le bouton permettra de passer directement à 1 min 35 s.
+                Laisse les deux champs vides si le contenu n'a pas
+                d'introduction à passer.
+            </p>
+
+            <div class="divider"></div>
+
             <div class="featured-option">
                 <label class="featured-label" for="featured">
                     <input type="checkbox" id="featured">
@@ -270,78 +377,109 @@
                     </span>
                 </label>
             </div>
+
             <div class="divider"></div>
+
             <h3>Source du contenu</h3>
+
             <div class="mode-options">
+
                 <label class="mode-card selected" id="modeLocalCard">
                     <input type="radio" name="mode"
                         value="local" checked>
+
                     <span class="mode-icon">▣</span>
                     <span class="mode-title">Depuis mon iPhone</span>
                     <span class="mode-description">
                         Choisir une affiche et une vidéo dans Fichiers ou Photos.
                     </span>
                 </label>
+
                 <label class="mode-card" id="modeOnlineCard">
                     <input type="radio" name="mode" value="online">
+
                     <span class="mode-icon">◎</span>
                     <span class="mode-title">Depuis Internet</span>
                     <span class="mode-description">
                         Utiliser les liens d'une affiche et d'une vidéo en ligne.
                     </span>
                 </label>
+
             </div>
+
             <div id="localFields" class="media-panel">
+
                 <h3>Fichiers de mon iPhone</h3>
+
                 <div class="field">
                     <label for="imageFile">Image de l'affiche</label>
                     <input type="file" id="imageFile" accept="image/*">
                     <small>Sélectionne une affiche depuis ton appareil.</small>
                 </div>
+
                 <div class="field">
                     <label for="videoFile">Fichier vidéo</label>
                     <input type="file" id="videoFile" accept="video/*">
+
                     <small>
                         Une vidéo locale n'est pas automatiquement
                         téléversée sur Internet.
                     </small>
                 </div>
+
             </div>
+
             <div id="onlineFields" class="media-panel hidden">
+
                 <h3>Liens Internet</h3>
+
                 <div class="field">
                     <label for="imageUrl">Lien de l'affiche</label>
                     <input type="url" id="imageUrl"
                         placeholder="https://exemple.com/affiche.jpg">
                 </div>
+
                 <div class="field">
                     <label for="videoUrl">Lien de la vidéo</label>
                     <input type="url" id="videoUrl"
                         placeholder="https://exemple.com/video.mp4">
                 </div>
+
             </div>
+
             <div class="preview-area">
+
                 <h3>Aperçu de l'affiche</h3>
+
                 <div class="poster-preview">
                     <img id="imagePreview" alt="Aperçu de l'affiche">
                     <span id="previewPlaceholder">🎬</span>
                 </div>
+
                 <p id="previewName">Ton titre apparaîtra ici</p>
+
             </div>
+
             <div class="form-actions">
+
                 <button type="submit"
                     class="primary-button" id="saveButton">
                     + Ajouter au catalogue
                 </button>
+
                 <button type="button"
                     class="secondary-button hidden" id="cancelEdit">
                     Annuler la modification
                 </button>
+
             </div>
+
         </form>
     </section>
+
     <!-- CATALOGUE -->
     <section class="panel catalog-panel" id="catalogue">
+
         <div class="panel-heading">
             <div>
                 <p class="eyebrow">CONTENUS ENREGISTRÉS</p>
@@ -351,25 +489,35 @@
                 </p>
             </div>
         </div>
+
         <div class="search-row">
+
             <input type="search" id="searchAdmin"
                 placeholder="Rechercher un titre...">
+
             <select id="filterType">
                 <option value="Tous">Tous les contenus</option>
                 <option value="Film">Films</option>
                 <option value="Série">Séries</option>
             </select>
+
         </div>
+
         <div id="filmsList" class="films-list"></div>
+
         <p id="emptyMessage" class="empty-message hidden">
             Aucun contenu trouvé.
         </p>
+
     </section>
+
     <footer>
         © 2026 MOBILUS — Administration
     </footer>
+
 </main>
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 
 <script src="supabase-config.js"></script>
@@ -383,5 +531,6 @@
 <script src="admin-utilisateurs.js"></script>
 
 <script src="admin-demandes.js"></script>
+
 </body>
 </html>
