@@ -20,6 +20,13 @@ const langueInput = document.getElementById("langue");
 const classificationInput = document.getElementById("classification");
 const featuredInput = document.getElementById("featured");
 
+/* NOUVEAUX CHAMPS : INTRODUCTION */
+const introDebutInput =
+    document.getElementById("introDebutSecondes");
+
+const introFinInput =
+    document.getElementById("introFinSecondes");
+
 const imageFileInput = document.getElementById("imageFile");
 const videoFileInput = document.getElementById("videoFile");
 const imageUrlInput = document.getElementById("imageUrl");
@@ -153,6 +160,57 @@ function afficherErreur(erreur) {
         erreur.message ||
         "Une erreur est survenue pendant l'opération."
     );
+}
+
+/* =========================================
+   VALIDATION DE L'INTRODUCTION
+========================================= */
+
+function obtenirParametresIntroduction() {
+    const debutBrut = introDebutInput.value.trim();
+    const finBrut = introFinInput.value.trim();
+
+    // Les deux champs doivent être remplis ensemble.
+    if (!debutBrut && !finBrut) {
+        return {
+            debut: null,
+            fin: null
+        };
+    }
+
+    if (!debutBrut || !finBrut) {
+        throw new Error(
+            "Renseigne le début ET la fin de l'introduction, " +
+            "ou laisse les deux champs vides."
+        );
+    }
+
+    const debut = Number(debutBrut);
+    const fin = Number(finBrut);
+
+    if (
+        !Number.isInteger(debut) ||
+        !Number.isInteger(fin) ||
+        debut < 0 ||
+        fin < 0
+    ) {
+        throw new Error(
+            "Les temps de l'introduction doivent être des " +
+            "nombres entiers positifs ou nuls."
+        );
+    }
+
+    if (fin <= debut) {
+        throw new Error(
+            "La fin de l'introduction doit être supérieure " +
+            "au début."
+        );
+    }
+
+    return {
+        debut: debut,
+        fin: fin
+    };
 }
 
 /* =========================================
@@ -413,7 +471,7 @@ async function televerserImage(fichier, db) {
 }
 
 /* =========================================
-   TÉLÉVERSEMENT DES VIDÉOS PRIVÉES
+   TÉLVERSEMENT DES VIDÉOS PRIVÉES
 ========================================= */
 
 async function televerserVideo(fichier, db) {
@@ -595,6 +653,28 @@ function afficherCatalogue() {
             ].filter(Boolean).join(" • ");
 
             details.appendChild(informations);
+        }
+
+        /* AFFICHER LES PARAMÈTRES DE L'INTRODUCTION */
+        if (
+            film.intro_debut_secondes !== null &&
+            film.intro_debut_secondes !== undefined &&
+            film.intro_fin_secondes !== null &&
+            film.intro_fin_secondes !== undefined
+        ) {
+            const introduction =
+                document.createElement("p");
+
+            introduction.className = "film-meta";
+
+            introduction.textContent =
+                "⏭ Introduction : " +
+                film.intro_debut_secondes +
+                " s → " +
+                film.intro_fin_secondes +
+                " s";
+
+            details.appendChild(introduction);
         }
 
         if (film.featured) {
@@ -782,6 +862,18 @@ form.addEventListener("submit", async event => {
         return;
     }
 
+    /* VALIDATION DES TEMPS DE L'INTRODUCTION */
+    let parametresIntroduction;
+
+    try {
+        parametresIntroduction =
+            obtenirParametresIntroduction();
+
+    } catch (erreur) {
+        alert(erreur.message);
+        return;
+    }
+
     const idExistant = filmIdInput.value;
 
     const ancienFilm = idExistant
@@ -913,7 +1005,14 @@ form.addEventListener("submit", async event => {
             publie: ancienFilm
                 ? statutPublicationInput.value === "true"
                 : false,
-            featured: featuredInput.checked
+            featured: featuredInput.checked,
+
+            /* NOUVEAUX PARAMÈTRES DE L'INTRODUCTION */
+            intro_debut_secondes:
+                parametresIntroduction.debut,
+
+            intro_fin_secondes:
+                parametresIntroduction.fin
         };
 
         /* UNE SEULE VEDETTE */
@@ -1010,6 +1109,13 @@ function modifierFilm(id) {
         film.publie ? "true" : "false";
 
     featuredInput.checked = film.featured === true;
+
+    /* RESTAURER LES PARAMÈTRES DE L'INTRODUCTION */
+    introDebutInput.value =
+        film.intro_debut_secondes ?? "";
+
+    introFinInput.value =
+        film.intro_fin_secondes ?? "";
 
     imageChoisie = obtenirImage(film);
 
@@ -1109,6 +1215,10 @@ function reinitialiserFormulaire() {
 
     filmIdInput.value = "";
     imageChoisie = "";
+
+    /* VIDER LES PARAMÈTRES DE L'INTRODUCTION */
+    introDebutInput.value = "";
+    introFinInput.value = "";
 
     if (imageObjectURL) {
         URL.revokeObjectURL(imageObjectURL);
