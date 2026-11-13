@@ -1,5 +1,3 @@
-
-
 /* =========================================
    MOBILUS — APPLICATION PRINCIPALE
    Catalogue Supabase + catalogue local
