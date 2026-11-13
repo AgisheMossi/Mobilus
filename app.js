@@ -1,7 +1,9 @@
+
 /* =========================================
    MOBILUS — APPLICATION PRINCIPALE
    Catalogue Supabase + catalogue local
-   TOP 10 + NOMBRE DE VUES
+   TOP 10 + TENDANCES 24H / 7 JOURS
+   FAVORIS + HISTORIQUE + RECHERCHE
 ========================================== */
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -16,6 +18,14 @@ document.addEventListener("DOMContentLoaded", function () {
     let catalogueFilms = [];
     let categorieActive = "Tous";
     let rechercheActive = "";
+
+    let top10Section = null;
+    let top10Grid = null;
+
+    let tendancesSection = null;
+    let tendancesGrid = null;
+
+    let periodeTendancesActive = "24h";
 
     /* ======================================
        OUTILS
@@ -34,6 +44,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
         return vues.toLocaleString("fr-FR") +
             (vues === 1 ? " vue" : " vues");
+    }
+
+    function formaterNombreLectures(nombre) {
+        const vues = Math.max(0, Number(nombre) || 0);
+
+        return vues.toLocaleString("fr-FR") +
+            (vues === 1 ? " lecture" : " lectures");
     }
 
     function afficherMessage(message) {
@@ -193,6 +210,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 afficherFilms();
                 afficherTop10();
+                chargerTendances("24h");
                 return;
             }
 
@@ -215,6 +233,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (catalogueFilms.length > 0) {
             afficherFilms();
             afficherTop10();
+            chargerTendances("24h");
 
             console.log(
                 "MOBILUS : catalogue local chargé.",
@@ -229,7 +248,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     /* ======================================
-       STYLE DU TOP 10
+       STYLE TOP 10 ET TENDANCES
     ====================================== */
 
     function installerStyleTop10() {
@@ -241,12 +260,14 @@ document.addEventListener("DOMContentLoaded", function () {
         style.id = "mobilusTop10Style";
 
         style.textContent = `
-            .mobilus-top10-section {
+            .mobilus-top10-section,
+            .mobilus-tendances-section {
                 width: 100%;
                 margin: 25px 0 35px;
             }
 
-            .mobilus-top10-title {
+            .mobilus-top10-title,
+            .mobilus-tendances-title {
                 color: #ffffff;
                 font-size: 22px;
                 font-weight: 900;
@@ -254,17 +275,20 @@ document.addEventListener("DOMContentLoaded", function () {
                 letter-spacing: .5px;
             }
 
-            .mobilus-top10-title span {
+            .mobilus-top10-title span,
+            .mobilus-tendances-title span {
                 color: #e50920;
             }
 
-            .mobilus-top10-subtitle {
+            .mobilus-top10-subtitle,
+            .mobilus-tendances-subtitle {
                 color: #999999;
                 font-size: 12px;
                 margin: 0 0 17px;
             }
 
-            .mobilus-top10-grid {
+            .mobilus-top10-grid,
+            .mobilus-tendances-grid {
                 display: grid;
                 grid-template-columns: repeat(
                     auto-fill,
@@ -320,20 +344,71 @@ document.addEventListener("DOMContentLoaded", function () {
                 margin-top: 7px;
             }
 
-            .mobilus-top10-empty {
+            .mobilus-top10-empty,
+            .mobilus-tendances-empty {
                 color: #999999;
+                font-size: 13px;
+                padding: 15px 0;
+                grid-column: 1 / -1;
+            }
+
+            .mobilus-tendances-tabs {
+                display: flex;
+                gap: 10px;
+                margin: 15px 0 18px;
+                flex-wrap: wrap;
+            }
+
+            .mobilus-tendances-tab {
+                padding: 10px 17px;
+                border: 1px solid #383838;
+                border-radius: 7px;
+                background: #171717;
+                color: #ffffff;
+                font-size: 12px;
+                font-weight: bold;
+                cursor: pointer;
+                transition: .2s ease;
+            }
+
+            .mobilus-tendances-tab.active {
+                background: #e50920;
+                border-color: #e50920;
+                color: #ffffff;
+            }
+
+            .mobilus-tendances-tab:disabled {
+                opacity: .6;
+                cursor: wait;
+            }
+
+            .mobilus-tendances-loading {
+                color: #aaaaaa;
+                font-size: 13px;
+                padding: 18px 0;
+            }
+
+            .mobilus-tendances-error {
+                color: #ff6878;
                 font-size: 13px;
                 padding: 15px 0;
             }
 
             @media (max-width: 480px) {
-                .mobilus-top10-grid {
+                .mobilus-top10-grid,
+                .mobilus-tendances-grid {
                     grid-template-columns: repeat(2, minmax(0, 1fr));
                     gap: 12px;
                 }
 
-                .mobilus-top10-title {
+                .mobilus-top10-title,
+                .mobilus-tendances-title {
                     font-size: 20px;
+                }
+
+                .mobilus-tendances-tab {
+                    flex: 1;
+                    padding: 10px 8px;
                 }
             }
         `;
@@ -343,37 +418,69 @@ document.addEventListener("DOMContentLoaded", function () {
 
     /* ======================================
        SECTION TOP 10 MOBILUS
+       RÉUTILISE LE TOP 10 DE INDEX.HTML
     ====================================== */
 
     function installerSectionTop10() {
         if (!movieGrid || !movieGrid.parentNode) return null;
 
-        let section = document.getElementById("mobilusTop10");
+        let section =
+            document.getElementById("top10") ||
+            document.getElementById("mobilusTop10");
 
         if (!section) {
             section = document.createElement("section");
             section.id = "mobilusTop10";
-            section.className = "mobilus-top10-section";
 
-            const titre = document.createElement("h2");
-            titre.className = "mobilus-top10-title";
-            titre.innerHTML = 'TOP <span>10</span> MOBILUS';
+            movieGrid.parentNode.insertBefore(section, movieGrid);
+        }
 
-            const sousTitre = document.createElement("p");
+        section.classList.add("mobilus-top10-section");
+
+        let titre = section.querySelector(
+            ".mobilus-top10-title"
+        );
+
+        if (!titre) {
+            const titreExistant = section.querySelector("h1, h2, h3");
+
+            if (titreExistant) {
+                titreExistant.classList.add("mobilus-top10-title");
+            } else {
+                titre = document.createElement("h2");
+                titre.className = "mobilus-top10-title";
+                titre.innerHTML = 'TOP <span>10</span> MOBILUS';
+                section.appendChild(titre);
+            }
+        }
+
+        let sousTitre = section.querySelector(
+            ".mobilus-top10-subtitle"
+        );
+
+        if (!sousTitre) {
+            sousTitre = document.createElement("p");
             sousTitre.className = "mobilus-top10-subtitle";
             sousTitre.textContent =
                 "Les films et séries les plus regardés.";
 
-            const grille = document.createElement("div");
-            grille.id = "mobilusTop10Grid";
-            grille.className = "mobilus-top10-grid";
-
-            section.appendChild(titre);
             section.appendChild(sousTitre);
-            section.appendChild(grille);
-
-            movieGrid.parentNode.insertBefore(section, movieGrid);
         }
+
+        top10Grid =
+            document.getElementById("top10Grid") ||
+            document.getElementById("mobilusTop10Grid");
+
+        if (!top10Grid) {
+            top10Grid = document.createElement("div");
+            top10Grid.id = "mobilusTop10Grid";
+            section.appendChild(top10Grid);
+        }
+
+        top10Grid.id = "mobilusTop10Grid";
+        top10Grid.classList.add("mobilus-top10-grid");
+
+        top10Section = section;
 
         return section;
     }
@@ -382,7 +489,12 @@ document.addEventListener("DOMContentLoaded", function () {
        CARTE TOP 10
     ====================================== */
 
-    function creerCarteTop10(film, classement) {
+    function creerCarteTop10(
+        film,
+        classement,
+        vuesAffichees,
+        etiquetteVues
+    ) {
         const carte = document.createElement("article");
         carte.className = "mobilus-top10-card";
 
@@ -436,8 +548,18 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const vues = document.createElement("div");
         vues.className = "mobilus-top10-views";
-        vues.textContent =
-            "▶ " + formaterNombreVues(film.nombre_vues);
+
+        if (vuesAffichees !== undefined) {
+            vues.textContent =
+                "▶ " + formaterNombreLectures(vuesAffichees);
+        } else {
+            vues.textContent =
+                "▶ " + formaterNombreVues(film.nombre_vues);
+        }
+
+        if (etiquetteVues) {
+            vues.textContent += " · " + etiquetteVues;
+        }
 
         const actions = document.createElement("div");
         actions.className = "movie-actions";
@@ -493,15 +615,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
         installerStyleTop10();
 
-        const section = installerSectionTop10();
+        installerSectionTop10();
 
-        if (!section) return;
+        if (!top10Grid) return;
 
-        const grille = document.getElementById("mobilusTop10Grid");
-
-        if (!grille) return;
-
-        grille.innerHTML = "";
+        top10Grid.innerHTML = "";
 
         const classement = catalogueFilms
             .slice()
@@ -511,14 +629,273 @@ document.addEventListener("DOMContentLoaded", function () {
             .slice(0, 10);
 
         if (classement.length === 0) {
-            grille.innerHTML =
-                '<p class="mobilus-top10-empty">Aucun classement disponible.</p>';
+            const message = document.createElement("p");
+            message.className = "mobilus-top10-empty";
+            message.textContent = "Aucun classement disponible.";
+
+            top10Grid.appendChild(message);
             return;
         }
 
         classement.forEach(function (film, index) {
-            grille.appendChild(
+            top10Grid.appendChild(
                 creerCarteTop10(film, index + 1)
+            );
+        });
+    }
+
+    /* ======================================
+       SECTION TENDANCES MOBILUS
+    ====================================== */
+
+    function installerSectionTendances() {
+        if (!movieGrid || !movieGrid.parentNode) return null;
+
+        let section = document.getElementById(
+            "mobilusTendances"
+        );
+
+        if (!section) {
+            section = document.createElement("section");
+            section.id = "mobilusTendances";
+            section.className = "mobilus-tendances-section";
+
+            const titre = document.createElement("h2");
+            titre.className = "mobilus-tendances-title";
+            titre.innerHTML = 'TENDANCES <span>MOBILUS</span>';
+
+            const sousTitre = document.createElement("p");
+            sousTitre.className = "mobilus-tendances-subtitle";
+            sousTitre.textContent =
+                "Les contenus les plus regardés sur MOBILUS.";
+
+            const onglets = document.createElement("div");
+            onglets.className = "mobilus-tendances-tabs";
+
+            const bouton24h = document.createElement("button");
+            bouton24h.type = "button";
+            bouton24h.className = "mobilus-tendances-tab";
+            bouton24h.dataset.periode = "24h";
+            bouton24h.textContent = "Dernières 24 heures";
+
+            const bouton7j = document.createElement("button");
+            bouton7j.type = "button";
+            bouton7j.className = "mobilus-tendances-tab";
+            bouton7j.dataset.periode = "7j";
+            bouton7j.textContent = "7 derniers jours";
+
+            onglets.appendChild(bouton24h);
+            onglets.appendChild(bouton7j);
+
+            const grille = document.createElement("div");
+            grille.id = "mobilusTendancesGrid";
+            grille.className = "mobilus-tendances-grid";
+
+            section.appendChild(titre);
+            section.appendChild(sousTitre);
+            section.appendChild(onglets);
+            section.appendChild(grille);
+
+            if (
+                top10Section &&
+                top10Section.parentNode === movieGrid.parentNode
+            ) {
+                top10Section.insertAdjacentElement(
+                    "afterend",
+                    section
+                );
+            } else {
+                movieGrid.parentNode.insertBefore(
+                    section,
+                    movieGrid
+                );
+            }
+        }
+
+        tendancesSection = section;
+
+        tendancesGrid = document.getElementById(
+            "mobilusTendancesGrid"
+        );
+
+        if (!tendancesGrid) {
+            tendancesGrid = document.createElement("div");
+            tendancesGrid.id = "mobilusTendancesGrid";
+            tendancesGrid.className = "mobilus-tendances-grid";
+            section.appendChild(tendancesGrid);
+        }
+
+        const boutons = section.querySelectorAll(
+            ".mobilus-tendances-tab"
+        );
+
+        boutons.forEach(function (bouton) {
+            if (bouton.dataset.mobilusListener === "true") {
+                return;
+            }
+
+            bouton.dataset.mobilusListener = "true";
+
+            bouton.addEventListener("click", function () {
+                chargerTendances(bouton.dataset.periode);
+            });
+        });
+
+        actualiserOngletsTendances();
+
+        return section;
+    }
+
+    /* ======================================
+       ACTUALISER LES ONGLETS TENDANCES
+    ====================================== */
+
+    function actualiserOngletsTendances() {
+        if (!tendancesSection) return;
+
+        tendancesSection.querySelectorAll(
+            ".mobilus-tendances-tab"
+        ).forEach(function (bouton) {
+            bouton.classList.toggle(
+                "active",
+                bouton.dataset.periode === periodeTendancesActive
+            );
+        });
+    }
+
+    /* ======================================
+       CHARGER LES TENDANCES DEPUIS SUPABASE
+    ====================================== */
+
+    async function chargerTendances(periode) {
+        if (periode !== "24h" && periode !== "7j") {
+            return;
+        }
+
+        periodeTendancesActive = periode;
+
+        installerStyleTop10();
+        installerSectionTop10();
+        installerSectionTendances();
+
+        actualiserOngletsTendances();
+
+        if (!tendancesGrid) return;
+
+        tendancesGrid.innerHTML = "";
+
+        const chargement = document.createElement("p");
+        chargement.className = "mobilus-tendances-loading";
+        chargement.textContent =
+            "Chargement des tendances...";
+
+        tendancesGrid.appendChild(chargement);
+
+        if (!window.mobilusDB) {
+            tendancesGrid.innerHTML = "";
+
+            const message = document.createElement("p");
+            message.className = "mobilus-tendances-error";
+            message.textContent =
+                "Connexion à Supabase indisponible.";
+
+            tendancesGrid.appendChild(message);
+            return;
+        }
+
+        try {
+            const resultat = await avecDelai(
+                window.mobilusDB.rpc(
+                    "obtenir_tendances_mobilus",
+                    {
+                        p_periode: periode
+                    }
+                ),
+                10000
+            );
+
+            if (resultat.error) {
+                throw resultat.error;
+            }
+
+            let contenus = resultat.data;
+
+            if (typeof contenus === "string") {
+                contenus = JSON.parse(contenus);
+            }
+
+            if (!Array.isArray(contenus)) {
+                contenus = [];
+            }
+
+            afficherTendances(contenus, periode);
+
+        } catch (erreur) {
+            console.error(
+                "Erreur de chargement des tendances :",
+                erreur
+            );
+
+            tendancesGrid.innerHTML = "";
+
+            const message = document.createElement("p");
+            message.className = "mobilus-tendances-error";
+            message.textContent =
+                "Impossible de charger les tendances pour le moment.";
+
+            tendancesGrid.appendChild(message);
+        }
+    }
+
+    /* ======================================
+       AFFICHER LES TENDANCES
+    ====================================== */
+
+    function afficherTendances(contenus, periode) {
+        if (!tendancesGrid) return;
+
+        tendancesGrid.innerHTML = "";
+
+        if (!Array.isArray(contenus) || contenus.length === 0) {
+            const message = document.createElement("p");
+            message.className = "mobilus-tendances-empty";
+
+            message.textContent =
+                periode === "24h"
+                    ? "Aucune lecture enregistrée durant les dernières 24 heures."
+                    : "Aucune lecture enregistrée durant les 7 derniers jours.";
+
+            tendancesGrid.appendChild(message);
+            return;
+        }
+
+        contenus.forEach(function (contenu, index) {
+            const filmNormalise = normaliserFilm(contenu);
+
+            const filmExistant = catalogueFilms.find(
+                function (element) {
+                    return String(element.id) === String(filmNormalise.id);
+                }
+            );
+
+            const film = filmExistant || filmNormalise;
+
+            if (!filmExistant) {
+                catalogueFilms.push(film);
+            }
+
+            const nombreLectures = Math.max(
+                0,
+                Number(contenu.vues_periode) || 0
+            );
+
+            tendancesGrid.appendChild(
+                creerCarteTop10(
+                    film,
+                    index + 1,
+                    nombreLectures,
+                    periode === "24h" ? "24 h" : "7 jours"
+                )
             );
         });
     }
