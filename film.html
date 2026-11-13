@@ -119,6 +119,40 @@ button,select {font:inherit;cursor:pointer}
 }
 .indicateur-video.cache {display:none}
 
+/* PASSER L'INTRODUCTION */
+
+.zone-passer-intro {
+    display:flex;
+    justify-content:flex-end;
+    margin:0 0 16px;
+}
+.bouton-passer-intro {
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:9px;
+    min-height:43px;
+    padding:11px 17px;
+    background:#252525;
+    color:white;
+    border:1px solid #555;
+    border-radius:7px;
+    font-size:13px;
+    font-weight:bold;
+    transition:background .2s,border-color .2s;
+}
+.bouton-passer-intro:hover {
+    background:var(--rouge);
+    border-color:var(--rouge);
+}
+.bouton-passer-intro[hidden] {
+    display:none !important;
+}
+.bouton-passer-intro .icone-intro {
+    color:var(--jaune);
+    font-size:17px;
+}
+
 .commandes-video {
     display:none;flex-wrap:wrap;align-items:center;
     gap:10px;padding:13px;margin-bottom:18px;
@@ -320,6 +354,19 @@ footer {
 
     </section>
 
+    <!-- BOUTON PASSER L'INTRODUCTION -->
+    <div class="zone-passer-intro">
+        <button
+            type="button"
+            class="bouton-passer-intro"
+            id="boutonPasserIntro"
+            hidden
+        >
+            <span class="icone-intro">⏭</span>
+            Passer l'introduction
+        </button>
+    </div>
+
     <section class="commandes-video" id="commandesVideo">
 
         <div class="commande-groupe" id="groupeQualite" hidden>
@@ -368,8 +415,6 @@ footer {
             Aucune description disponible.
         </p>
     </section>
-
-    <!-- NOUVELLE SECTION : FILMS SIMILAIRES -->
 
     <section class="section-similaires" id="sectionFilmsSimilaires" hidden>
         <h2 class="titre-similaires">Films similaires</h2>
@@ -420,7 +465,8 @@ const elements = {
     compteurVues:document.getElementById("compteurVues"),
     nombreVues:document.getElementById("nombreVues"),
     sectionSimilaires:document.getElementById("sectionFilmsSimilaires"),
-    grilleSimilaires:document.getElementById("grilleFilmsSimilaires")
+    grilleSimilaires:document.getElementById("grilleFilmsSimilaires"),
+    passerIntro:document.getElementById("boutonPasserIntro")
 };
 
 document.getElementById("anneeActuelle").textContent =
@@ -520,7 +566,20 @@ function normaliserContenu(contenu) {
 
         duree:contenu.duree || contenu.duration || "",
 
-        niveau_acces:contenu.niveau_acces || "gratuit"
+        niveau_acces:contenu.niveau_acces || "gratuit",
+
+        /* PARAMÈTRES DE L'INTRODUCTION */
+        intro_debut_secondes:
+            contenu.intro_debut_secondes === null ||
+            contenu.intro_debut_secondes === undefined
+                ? null
+                : Number(contenu.intro_debut_secondes),
+
+        intro_fin_secondes:
+            contenu.intro_fin_secondes === null ||
+            contenu.intro_fin_secondes === undefined
+                ? null
+                : Number(contenu.intro_fin_secondes)
     };
 }
 
@@ -602,7 +661,6 @@ function creerCarteSimilaire(film) {
     details.className = "details-carte-similaire";
 
     const annee = film.year || film.annee || "";
-
     const categorie = film.category || film.categorie || "";
 
     details.textContent = [annee,categorie]
@@ -628,13 +686,6 @@ async function chargerFilmsSimilaires() {
     if (!db) return;
 
     try {
-        /*
-         * On récupère les contenus publiés, puis on recherche
-         * les correspondances dans les données déjà disponibles.
-         * Cela évite de dépendre d'un nom de colonne différent
-         * entre categorie et category.
-         */
-
         const resultat = await db
             .from("contenus")
             .select("*")
@@ -667,11 +718,6 @@ async function chargerFilmsSimilaires() {
                 return categorie === categorieActuelle;
             });
         }
-
-        /*
-         * Si aucune correspondance de catégorie n'est trouvée,
-         * on essaie de retrouver les contenus du même type.
-         */
 
         if (!similaires.length && typeActuel) {
             similaires = contenus.filter(function(contenu) {
@@ -833,7 +879,6 @@ async function chargerContenu() {
         enregistrerRecent();
         actualiserBoutonFavori();
 
-        /* Chargement de la nouvelle section */
         chargerFilmsSimilaires();
 
         await verifierStatutPremium();
@@ -1088,6 +1133,8 @@ function restaurerProgression(video) {
             false
         );
 
+        actualiserBoutonPasserIntro(video);
+
         setTimeout(function() {
             if (video === videoActuelle) {
                 masquerMessageVideo();
@@ -1115,6 +1162,85 @@ function formaterTemps(secondes) {
 
     return minutes + "min " + reste + "s";
 }
+
+/* PASSER L'INTRODUCTION */
+
+function obtenirBornesIntroduction() {
+    if (!filmActuel) return null;
+
+    const debut = Number(filmActuel.intro_debut_secondes);
+    const fin = Number(filmActuel.intro_fin_secondes);
+
+    if (
+        filmActuel.intro_debut_secondes === null ||
+        filmActuel.intro_debut_secondes === undefined ||
+        filmActuel.intro_fin_secondes === null ||
+        filmActuel.intro_fin_secondes === undefined ||
+        !Number.isFinite(debut) ||
+        !Number.isFinite(fin) ||
+        debut < 0 ||
+        fin <= debut
+    ) {
+        return null;
+    }
+
+    return {debut:debut,fin:fin};
+}
+
+function actualiserBoutonPasserIntro(video) {
+    const bornes = obtenirBornesIntroduction();
+
+    if (
+        !video ||
+        video !== videoActuelle ||
+        !bornes ||
+        !Number.isFinite(video.currentTime) ||
+        video.ended
+    ) {
+        elements.passerIntro.hidden = true;
+        return;
+    }
+
+    const dansIntroduction =
+        video.currentTime >= bornes.debut &&
+        video.currentTime < bornes.fin;
+
+    elements.passerIntro.hidden = !dansIntroduction;
+}
+
+elements.passerIntro.addEventListener("click",function() {
+    const video = videoActuelle;
+    const bornes = obtenirBornesIntroduction();
+
+    if (!video || !bornes) return;
+
+    if (
+        video.currentTime < bornes.debut ||
+        video.currentTime >= bornes.fin
+    ) {
+        elements.passerIntro.hidden = true;
+        return;
+    }
+
+    try {
+        video.currentTime = bornes.fin;
+
+        sauvegarderProgression(video);
+
+        elements.passerIntro.hidden = true;
+
+        console.log(
+            "Introduction MOBILUS passée jusqu'à " +
+            bornes.fin + " secondes."
+        );
+
+    } catch(erreur) {
+        console.error(
+            "Impossible de passer l'introduction :",
+            erreur
+        );
+    }
+});
 
 /* COMPTEUR DE VUES */
 
@@ -1313,7 +1439,6 @@ function reinitialiserCommandes() {
 
     elements.audio.innerHTML = "";
 
-    /* Évite l'accumulation des anciens événements. */
     elements.qualite.onchange = null;
     elements.sousTitres.onchange = null;
     elements.audio.onchange = null;
@@ -1366,6 +1491,8 @@ function appliquerNouvelleSource(video,url,etat) {
             video.volume = etat.volume;
             video.muted = etat.muet;
             video.playbackRate = etat.vitesse;
+
+            actualiserBoutonPasserIntro(video);
 
             if (etat.lecture) {
                 video.play().catch(function() {});
@@ -1612,6 +1739,8 @@ function supprimerAncienneVideo() {
     operationSource++;
     operationSousTitres++;
 
+    elements.passerIntro.hidden = true;
+
     const ancienneVideo =
         elements.lecteur.querySelector("video,iframe");
 
@@ -1633,6 +1762,8 @@ function supprimerAncienneVideo() {
 }
 
 function afficherErreurLecture(message) {
+    elements.passerIntro.hidden = true;
+
     afficherMessageVideo(message,false);
 
     elements.reessayer.classList.add("visible");
@@ -1712,6 +1843,8 @@ function afficherLecteur(url,titre,data) {
     let progressionRestauree = false;
 
     video.addEventListener("loadstart",function() {
+        elements.passerIntro.hidden = true;
+
         afficherMessageVideo(
             "Chargement de la vidéo...",
             true
@@ -1731,10 +1864,12 @@ function afficherLecteur(url,titre,data) {
         progressionRestauree = true;
 
         restaurerProgression(video);
+        actualiserBoutonPasserIntro(video);
     });
 
     video.addEventListener("canplay",function() {
         masquerMessageVideo();
+        actualiserBoutonPasserIntro(video);
     });
 
     video.addEventListener("playing",function() {
@@ -1742,18 +1877,32 @@ function afficherLecteur(url,titre,data) {
 
         elements.reessayer.classList.remove("visible");
 
+        actualiserBoutonPasserIntro(video);
+
         compterVuePremium();
     });
 
     video.addEventListener("timeupdate",function() {
         sauvegarderProgression(video);
+        actualiserBoutonPasserIntro(video);
+    });
+
+    video.addEventListener("seeking",function() {
+        actualiserBoutonPasserIntro(video);
+    });
+
+    video.addEventListener("seeked",function() {
+        actualiserBoutonPasserIntro(video);
     });
 
     video.addEventListener("pause",function() {
         sauvegarderProgression(video);
+        actualiserBoutonPasserIntro(video);
     });
 
     video.addEventListener("ended",function() {
+        elements.passerIntro.hidden = true;
+
         try {
             localStorage.removeItem(
                 obtenirCleProgression()
@@ -1762,6 +1911,8 @@ function afficherLecteur(url,titre,data) {
     });
 
     video.addEventListener("error",function() {
+        elements.passerIntro.hidden = true;
+
         afficherErreurLecture(
             "Impossible de lire cette vidéo. Vérifiez que le fichier est accessible et réessayez."
         );
