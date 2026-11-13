@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -179,6 +180,75 @@ button:disabled {opacity:.5;cursor:not-allowed}
     font-size:14px;line-height:1.8;color:#c5c5c5;
     white-space:pre-line;overflow-wrap:anywhere;
 }
+
+/* FILMS SIMILAIRES */
+
+.section-similaires {
+    margin-top:30px;
+}
+.section-similaires[hidden] {
+    display:none;
+}
+.titre-similaires {
+    font-size:20px;
+    margin-bottom:16px;
+}
+.grille-similaires {
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:14px;
+}
+.carte-similaire {
+    display:block;
+    min-width:0;
+    color:white;
+    text-decoration:none;
+    background:#151515;
+    border:1px solid #292929;
+    border-radius:9px;
+    overflow:hidden;
+    transition:transform .2s,border-color .2s;
+}
+.carte-similaire:active {
+    transform:scale(.98);
+}
+.carte-similaire:hover {
+    border-color:var(--rouge);
+}
+.image-similaire {
+    width:100%;
+    aspect-ratio:2/3;
+    display:block;
+    object-fit:cover;
+    background:#222;
+}
+.image-similaire-manquante {
+    width:100%;
+    aspect-ratio:2/3;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#222;
+    color:#777;
+    font-size:13px;
+    text-align:center;
+    padding:10px;
+}
+.infos-similaire {
+    padding:10px;
+}
+.titre-carte-similaire {
+    font-size:13px;
+    line-height:1.4;
+    font-weight:bold;
+    overflow-wrap:anywhere;
+}
+.details-carte-similaire {
+    color:#999;
+    font-size:11px;
+    margin-top:6px;
+}
+
 footer {
     text-align:center;color:#777;padding:25px 15px;
     font-size:12px;border-top:1px solid #222;
@@ -187,6 +257,11 @@ footer {
 @media(min-width:700px) {
     .conteneur {padding-top:35px}
     .titre-principal {font-size:36px}
+    .grille-similaires {
+        grid-template-columns:repeat(4,minmax(0,1fr));
+        gap:18px;
+    }
+    .titre-carte-similaire {font-size:14px}
 }
 @media(prefers-reduced-motion:reduce) {
     .cercle-chargement,.indicateur-video {animation:none}
@@ -294,6 +369,13 @@ footer {
         </p>
     </section>
 
+    <!-- NOUVELLE SECTION : FILMS SIMILAIRES -->
+
+    <section class="section-similaires" id="sectionFilmsSimilaires" hidden>
+        <h2 class="titre-similaires">Films similaires</h2>
+        <div class="grille-similaires" id="grilleFilmsSimilaires"></div>
+    </section>
+
 </main>
 
 <footer>
@@ -336,7 +418,9 @@ const elements = {
     sousTitres:document.getElementById("choixSousTitres"),
     audio:document.getElementById("choixAudio"),
     compteurVues:document.getElementById("compteurVues"),
-    nombreVues:document.getElementById("nombreVues")
+    nombreVues:document.getElementById("nombreVues"),
+    sectionSimilaires:document.getElementById("sectionFilmsSimilaires"),
+    grilleSimilaires:document.getElementById("grilleFilmsSimilaires")
 };
 
 document.getElementById("anneeActuelle").textContent =
@@ -461,6 +545,175 @@ function afficherErreur(message) {
     elements.favori.disabled = true;
 }
 
+/* FILMS SIMILAIRES */
+
+function viderFilmsSimilaires() {
+    elements.grilleSimilaires.innerHTML = "";
+    elements.sectionSimilaires.hidden = true;
+}
+
+function creerCarteSimilaire(film) {
+    const carte = document.createElement("a");
+    carte.className = "carte-similaire";
+
+    carte.href = "film.html?id=" +
+        encodeURIComponent(obtenirIdentifiant(film));
+
+    const imageURL = film.image_url || film.image || "";
+
+    if (imageURL) {
+        const image = document.createElement("img");
+
+        image.className = "image-similaire";
+        image.src = imageURL;
+        image.alt = obtenirTitre(film);
+        image.loading = "lazy";
+
+        image.addEventListener("error",function() {
+            const remplacement = document.createElement("div");
+
+            remplacement.className = "image-similaire-manquante";
+            remplacement.textContent = "Image indisponible";
+
+            image.replaceWith(remplacement);
+        },{once:true});
+
+        carte.appendChild(image);
+
+    } else {
+        const remplacement = document.createElement("div");
+
+        remplacement.className = "image-similaire-manquante";
+        remplacement.textContent = "Image indisponible";
+
+        carte.appendChild(remplacement);
+    }
+
+    const informations = document.createElement("div");
+    informations.className = "infos-similaire";
+
+    const titre = document.createElement("h3");
+    titre.className = "titre-carte-similaire";
+    titre.textContent = obtenirTitre(film);
+
+    informations.appendChild(titre);
+
+    const details = document.createElement("p");
+    details.className = "details-carte-similaire";
+
+    const annee = film.year || film.annee || "";
+
+    const categorie = film.category || film.categorie || "";
+
+    details.textContent = [annee,categorie]
+        .filter(Boolean)
+        .join(" • ");
+
+    if (details.textContent) {
+        informations.appendChild(details);
+    }
+
+    carte.appendChild(informations);
+
+    return carte;
+}
+
+async function chargerFilmsSimilaires() {
+    viderFilmsSimilaires();
+
+    if (!filmActuel) return;
+
+    const db = window.mobilusDB;
+
+    if (!db) return;
+
+    try {
+        /*
+         * On récupère les contenus publiés, puis on recherche
+         * les correspondances dans les données déjà disponibles.
+         * Cela évite de dépendre d'un nom de colonne différent
+         * entre categorie et category.
+         */
+
+        const resultat = await db
+            .from("contenus")
+            .select("*")
+            .eq("publie",true)
+            .neq("id",filmActuel.id)
+            .limit(100);
+
+        if (resultat.error) throw resultat.error;
+
+        if (!Array.isArray(resultat.data)) return;
+
+        const categorieActuelle = String(
+            filmActuel.categorie || filmActuel.category || ""
+        ).trim().toLowerCase();
+
+        const typeActuel = String(
+            filmActuel.type || ""
+        ).trim().toLowerCase();
+
+        const contenus = resultat.data.map(normaliserContenu);
+
+        let similaires = [];
+
+        if (categorieActuelle) {
+            similaires = contenus.filter(function(contenu) {
+                const categorie = String(
+                    contenu.categorie || contenu.category || ""
+                ).trim().toLowerCase();
+
+                return categorie === categorieActuelle;
+            });
+        }
+
+        /*
+         * Si aucune correspondance de catégorie n'est trouvée,
+         * on essaie de retrouver les contenus du même type.
+         */
+
+        if (!similaires.length && typeActuel) {
+            similaires = contenus.filter(function(contenu) {
+                const type = String(
+                    contenu.type || ""
+                ).trim().toLowerCase();
+
+                return type === typeActuel;
+            });
+        }
+
+        similaires = similaires
+            .filter(function(contenu) {
+                return obtenirIdentifiant(contenu) !==
+                    obtenirIdentifiant(filmActuel);
+            })
+            .slice(0,8);
+
+        if (!similaires.length) {
+            viderFilmsSimilaires();
+            return;
+        }
+
+        const fragment = document.createDocumentFragment();
+
+        similaires.forEach(function(contenu) {
+            fragment.appendChild(creerCarteSimilaire(contenu));
+        });
+
+        elements.grilleSimilaires.appendChild(fragment);
+        elements.sectionSimilaires.hidden = false;
+
+    } catch(erreur) {
+        console.error(
+            "Erreur chargement des films similaires :",
+            erreur
+        );
+
+        viderFilmsSimilaires();
+    }
+}
+
 function estURLWeb(url) {
     return typeof url === "string" &&
         /^https?:\/\//i.test(url.trim());
@@ -579,6 +832,9 @@ async function chargerContenu() {
         afficherInformations();
         enregistrerRecent();
         actualiserBoutonFavori();
+
+        /* Chargement de la nouvelle section */
+        chargerFilmsSimilaires();
 
         await verifierStatutPremium();
 
