@@ -119,40 +119,6 @@ button,select {font:inherit;cursor:pointer}
 }
 .indicateur-video.cache {display:none}
 
-/* PASSER L'INTRODUCTION */
-
-.zone-passer-intro {
-    display:flex;
-    justify-content:flex-end;
-    margin:0 0 16px;
-}
-.bouton-passer-intro {
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    gap:9px;
-    min-height:43px;
-    padding:11px 17px;
-    background:#252525;
-    color:white;
-    border:1px solid #555;
-    border-radius:7px;
-    font-size:13px;
-    font-weight:bold;
-    transition:background .2s,border-color .2s;
-}
-.bouton-passer-intro:hover {
-    background:var(--rouge);
-    border-color:var(--rouge);
-}
-.bouton-passer-intro[hidden] {
-    display:none !important;
-}
-.bouton-passer-intro .icone-intro {
-    color:var(--jaune);
-    font-size:17px;
-}
-
 .commandes-video {
     display:none;flex-wrap:wrap;align-items:center;
     gap:10px;padding:13px;margin-bottom:18px;
@@ -215,72 +181,39 @@ button:disabled {opacity:.5;cursor:not-allowed}
     white-space:pre-line;overflow-wrap:anywhere;
 }
 
-/* FILMS SIMILAIRES */
-
-.section-similaires {
-    margin-top:30px;
-}
-.section-similaires[hidden] {
-    display:none;
-}
-.titre-similaires {
-    font-size:20px;
-    margin-bottom:16px;
-}
+.section-similaires {margin-top:30px}
+.section-similaires[hidden] {display:none}
+.titre-similaires {font-size:20px;margin-bottom:16px}
 .grille-similaires {
     display:grid;
     grid-template-columns:repeat(2,minmax(0,1fr));
     gap:14px;
 }
 .carte-similaire {
-    display:block;
-    min-width:0;
-    color:white;
-    text-decoration:none;
-    background:#151515;
-    border:1px solid #292929;
-    border-radius:9px;
-    overflow:hidden;
-    transition:transform .2s,border-color .2s;
+    display:block;min-width:0;color:white;
+    text-decoration:none;background:#151515;
+    border:1px solid #292929;border-radius:9px;
+    overflow:hidden;transition:transform .2s,border-color .2s;
 }
-.carte-similaire:active {
-    transform:scale(.98);
-}
-.carte-similaire:hover {
-    border-color:var(--rouge);
-}
+.carte-similaire:active {transform:scale(.98)}
+.carte-similaire:hover {border-color:var(--rouge)}
 .image-similaire {
-    width:100%;
-    aspect-ratio:2/3;
-    display:block;
-    object-fit:cover;
-    background:#222;
+    width:100%;aspect-ratio:2/3;display:block;
+    object-fit:cover;background:#222;
 }
 .image-similaire-manquante {
-    width:100%;
-    aspect-ratio:2/3;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    background:#222;
-    color:#777;
-    font-size:13px;
-    text-align:center;
-    padding:10px;
+    width:100%;aspect-ratio:2/3;
+    display:flex;align-items:center;justify-content:center;
+    background:#222;color:#777;font-size:13px;
+    text-align:center;padding:10px;
 }
-.infos-similaire {
-    padding:10px;
-}
+.infos-similaire {padding:10px}
 .titre-carte-similaire {
-    font-size:13px;
-    line-height:1.4;
-    font-weight:bold;
+    font-size:13px;line-height:1.4;font-weight:bold;
     overflow-wrap:anywhere;
 }
 .details-carte-similaire {
-    color:#999;
-    font-size:11px;
-    margin-top:6px;
+    color:#999;font-size:11px;margin-top:6px;
 }
 
 footer {
@@ -344,28 +277,13 @@ footer {
     </div>
 
     <section class="lecteur" id="videoContainer" aria-label="Lecteur vidéo">
-
         <div class="message-video" id="messageVideo">
             <div class="indicateur-video" id="indicateurVideo"></div>
             <span id="texteMessageVideo">
                 Préparation de la vidéo...
             </span>
         </div>
-
     </section>
-
-    <!-- BOUTON PASSER L'INTRODUCTION -->
-    <div class="zone-passer-intro">
-        <button
-            type="button"
-            class="bouton-passer-intro"
-            id="boutonPasserIntro"
-            hidden
-        >
-            <span class="icone-intro">⏭</span>
-            Passer l'introduction
-        </button>
-    </div>
 
     <section class="commandes-video" id="commandesVideo">
 
@@ -394,7 +312,6 @@ footer {
     </div>
 
     <div class="actions">
-
         <button type="button" class="bouton-principal" id="boutonRegarder">
             ▶ Regarder le film
         </button>
@@ -406,7 +323,6 @@ footer {
         <button type="button" class="bouton-favori" id="boutonFavori">
             ♡ Ajouter aux favoris
         </button>
-
     </div>
 
     <section class="bloc-description">
@@ -465,8 +381,7 @@ const elements = {
     compteurVues:document.getElementById("compteurVues"),
     nombreVues:document.getElementById("nombreVues"),
     sectionSimilaires:document.getElementById("sectionFilmsSimilaires"),
-    grilleSimilaires:document.getElementById("grilleFilmsSimilaires"),
-    passerIntro:document.getElementById("boutonPasserIntro")
+    grilleSimilaires:document.getElementById("grilleFilmsSimilaires")
 };
 
 document.getElementById("anneeActuelle").textContent =
@@ -566,20 +481,7 @@ function normaliserContenu(contenu) {
 
         duree:contenu.duree || contenu.duration || "",
 
-        niveau_acces:contenu.niveau_acces || "gratuit",
-
-        /* PARAMÈTRES DE L'INTRODUCTION */
-        intro_debut_secondes:
-            contenu.intro_debut_secondes === null ||
-            contenu.intro_debut_secondes === undefined
-                ? null
-                : Number(contenu.intro_debut_secondes),
-
-        intro_fin_secondes:
-            contenu.intro_fin_secondes === null ||
-            contenu.intro_fin_secondes === undefined
-                ? null
-                : Number(contenu.intro_fin_secondes)
+        niveau_acces:contenu.niveau_acces || "gratuit"
     };
 }
 
@@ -1133,8 +1035,6 @@ function restaurerProgression(video) {
             false
         );
 
-        actualiserBoutonPasserIntro(video);
-
         setTimeout(function() {
             if (video === videoActuelle) {
                 masquerMessageVideo();
@@ -1162,85 +1062,6 @@ function formaterTemps(secondes) {
 
     return minutes + "min " + reste + "s";
 }
-
-/* PASSER L'INTRODUCTION */
-
-function obtenirBornesIntroduction() {
-    if (!filmActuel) return null;
-
-    const debut = Number(filmActuel.intro_debut_secondes);
-    const fin = Number(filmActuel.intro_fin_secondes);
-
-    if (
-        filmActuel.intro_debut_secondes === null ||
-        filmActuel.intro_debut_secondes === undefined ||
-        filmActuel.intro_fin_secondes === null ||
-        filmActuel.intro_fin_secondes === undefined ||
-        !Number.isFinite(debut) ||
-        !Number.isFinite(fin) ||
-        debut < 0 ||
-        fin <= debut
-    ) {
-        return null;
-    }
-
-    return {debut:debut,fin:fin};
-}
-
-function actualiserBoutonPasserIntro(video) {
-    const bornes = obtenirBornesIntroduction();
-
-    if (
-        !video ||
-        video !== videoActuelle ||
-        !bornes ||
-        !Number.isFinite(video.currentTime) ||
-        video.ended
-    ) {
-        elements.passerIntro.hidden = true;
-        return;
-    }
-
-    const dansIntroduction =
-        video.currentTime >= bornes.debut &&
-        video.currentTime < bornes.fin;
-
-    elements.passerIntro.hidden = !dansIntroduction;
-}
-
-elements.passerIntro.addEventListener("click",function() {
-    const video = videoActuelle;
-    const bornes = obtenirBornesIntroduction();
-
-    if (!video || !bornes) return;
-
-    if (
-        video.currentTime < bornes.debut ||
-        video.currentTime >= bornes.fin
-    ) {
-        elements.passerIntro.hidden = true;
-        return;
-    }
-
-    try {
-        video.currentTime = bornes.fin;
-
-        sauvegarderProgression(video);
-
-        elements.passerIntro.hidden = true;
-
-        console.log(
-            "Introduction MOBILUS passée jusqu'à " +
-            bornes.fin + " secondes."
-        );
-
-    } catch(erreur) {
-        console.error(
-            "Impossible de passer l'introduction :",
-            erreur
-        );
-    }
-});
 
 /* COMPTEUR DE VUES */
 
@@ -1492,8 +1313,6 @@ function appliquerNouvelleSource(video,url,etat) {
             video.muted = etat.muet;
             video.playbackRate = etat.vitesse;
 
-            actualiserBoutonPasserIntro(video);
-
             if (etat.lecture) {
                 video.play().catch(function() {});
             }
@@ -1739,8 +1558,6 @@ function supprimerAncienneVideo() {
     operationSource++;
     operationSousTitres++;
 
-    elements.passerIntro.hidden = true;
-
     const ancienneVideo =
         elements.lecteur.querySelector("video,iframe");
 
@@ -1762,10 +1579,7 @@ function supprimerAncienneVideo() {
 }
 
 function afficherErreurLecture(message) {
-    elements.passerIntro.hidden = true;
-
     afficherMessageVideo(message,false);
-
     elements.reessayer.classList.add("visible");
 }
 
@@ -1843,8 +1657,6 @@ function afficherLecteur(url,titre,data) {
     let progressionRestauree = false;
 
     video.addEventListener("loadstart",function() {
-        elements.passerIntro.hidden = true;
-
         afficherMessageVideo(
             "Chargement de la vidéo...",
             true
@@ -1864,12 +1676,10 @@ function afficherLecteur(url,titre,data) {
         progressionRestauree = true;
 
         restaurerProgression(video);
-        actualiserBoutonPasserIntro(video);
     });
 
     video.addEventListener("canplay",function() {
         masquerMessageVideo();
-        actualiserBoutonPasserIntro(video);
     });
 
     video.addEventListener("playing",function() {
@@ -1877,32 +1687,18 @@ function afficherLecteur(url,titre,data) {
 
         elements.reessayer.classList.remove("visible");
 
-        actualiserBoutonPasserIntro(video);
-
         compterVuePremium();
     });
 
     video.addEventListener("timeupdate",function() {
         sauvegarderProgression(video);
-        actualiserBoutonPasserIntro(video);
-    });
-
-    video.addEventListener("seeking",function() {
-        actualiserBoutonPasserIntro(video);
-    });
-
-    video.addEventListener("seeked",function() {
-        actualiserBoutonPasserIntro(video);
     });
 
     video.addEventListener("pause",function() {
         sauvegarderProgression(video);
-        actualiserBoutonPasserIntro(video);
     });
 
     video.addEventListener("ended",function() {
-        elements.passerIntro.hidden = true;
-
         try {
             localStorage.removeItem(
                 obtenirCleProgression()
@@ -1911,8 +1707,6 @@ function afficherLecteur(url,titre,data) {
     });
 
     video.addEventListener("error",function() {
-        elements.passerIntro.hidden = true;
-
         afficherErreurLecture(
             "Impossible de lire cette vidéo. Vérifiez que le fichier est accessible et réessayez."
         );
