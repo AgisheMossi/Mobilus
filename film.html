@@ -25,7 +25,7 @@ body {
     min-height:100vh;
 }
 body.chargement-actif {overflow:hidden}
-button,select {font:inherit;cursor:pointer}
+button,select,input {font:inherit;cursor:pointer}
 
 .ecran-chargement {
     position:fixed;inset:0;z-index:99999;
@@ -104,7 +104,135 @@ button,select {font:inherit;cursor:pointer}
 }
 .lecteur video {object-fit:contain}
 
-/* NOUVELLES COMMANDES DU LECTEUR */
+/* COMMANDES VLC SUPERPOSÉES */
+
+.commandes-vlc {
+    position:absolute;
+    inset:0;
+    z-index:4;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    padding:12px;
+    color:#fff;
+    background:linear-gradient(
+        to bottom,
+        rgba(0,0,0,.48),
+        transparent 25%,
+        transparent 55%,
+        rgba(0,0,0,.82)
+    );
+    opacity:1;
+    transition:opacity .25s;
+}
+.commandes-vlc.cache {
+    opacity:0;
+    pointer-events:none;
+}
+.commandes-vlc[hidden] {display:none}
+
+.vlc-haut {
+    display:flex;
+    justify-content:flex-end;
+    align-items:center;
+    gap:8px;
+}
+.vlc-centre {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:clamp(18px,5vw,45px);
+}
+.vlc-bas {
+    display:flex;
+    flex-direction:column;
+    gap:9px;
+}
+.vlc-ligne-progression {
+    display:flex;
+    align-items:center;
+    gap:9px;
+    width:100%;
+}
+.vlc-temps {
+    color:#fff;
+    font-size:12px;
+    white-space:nowrap;
+    font-variant-numeric:tabular-nums;
+}
+.vlc-progression {
+    flex:1;
+    min-width:0;
+    height:5px;
+    accent-color:var(--rouge);
+    cursor:pointer;
+}
+.vlc-ligne-outils {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+}
+.vlc-groupe {
+    display:flex;
+    align-items:center;
+    gap:8px;
+}
+.vlc-bouton {
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width:34px;
+    min-height:34px;
+    padding:6px;
+    border:0;
+    border-radius:50%;
+    color:#fff;
+    background:rgba(20,20,20,.62);
+    font-size:18px;
+    line-height:1;
+}
+.vlc-bouton:active {
+    background:var(--rouge);
+}
+.vlc-bouton.principal {
+    width:54px;
+    height:54px;
+    font-size:25px;
+    background:var(--rouge);
+}
+.vlc-bouton.principal:active {
+    background:#b80710;
+}
+.vlc-volume {
+    width:75px;
+    max-width:14vw;
+    height:4px;
+    accent-color:var(--rouge);
+}
+.vlc-vitesse {
+    min-height:32px;
+    max-width:78px;
+    padding:5px 7px;
+    border:1px solid #555;
+    border-radius:6px;
+    color:#fff;
+    background:rgba(20,20,20,.8);
+    font-size:12px;
+}
+.vlc-bouton:focus-visible,
+.vlc-progression:focus-visible,
+.vlc-volume:focus-visible,
+.vlc-vitesse:focus-visible {
+    outline:2px solid var(--jaune);
+    outline-offset:3px;
+}
+.lecteur.commandes-verrouillees .commandes-vlc {
+    display:none;
+}
+.lecteur video::-webkit-media-controls {
+    display:none !important;
+}
 
 .commandes-avancees {
     display:none;
@@ -157,9 +285,8 @@ button,select {font:inherit;cursor:pointer}
     font-size:10px;
     font-weight:bold;
 }
-.groupe-vitesse select {
-    width:100%;
-}
+.groupe-vitesse select {width:100%}
+
 .bouton-deverrouiller {
     position:absolute;
     z-index:5;
@@ -177,9 +304,7 @@ button,select {font:inherit;cursor:pointer}
     background:rgba(20,20,20,.9);
     font-size:21px;
 }
-.bouton-deverrouiller.visible {
-    display:flex;
-}
+.bouton-deverrouiller.visible {display:flex}
 .lecteur.commandes-verrouillees video {
     pointer-events:none;
 }
@@ -301,7 +426,6 @@ button:disabled {opacity:.5;cursor:not-allowed}
 .details-carte-similaire {
     color:#999;font-size:11px;margin-top:6px;
 }
-
 footer {
     text-align:center;color:#777;padding:25px 15px;
     font-size:12px;border-top:1px solid #222;
@@ -329,9 +453,21 @@ footer {
         padding:9px 7px;
         font-size:12px;
     }
-    .groupe-vitesse {
-        flex:1 1 40%;
+    .groupe-vitesse {flex:1 1 40%}
+    .commandes-vlc {padding:7px}
+    .vlc-centre {gap:18px}
+    .vlc-bouton.principal {
+        width:46px;height:46px;font-size:22px;
     }
+    .vlc-bouton {min-width:31px;min-height:31px;font-size:16px}
+    .vlc-volume {width:48px}
+    .vlc-vitesse {max-width:62px;font-size:11px}
+    .vlc-temps {font-size:10px}
+}
+@media(max-width:350px) {
+    .vlc-volume {display:none}
+    .vlc-ligne-outils {gap:4px}
+    .vlc-groupe {gap:4px}
 }
 @media(prefers-reduced-motion:reduce) {
     .cercle-chargement,.indicateur-video {animation:none}
@@ -387,6 +523,8 @@ footer {
             </span>
         </div>
 
+        <!-- Les commandes VLC seront ajoutées ici par JavaScript -->
+
         <button
             type="button"
             class="bouton-deverrouiller"
@@ -430,7 +568,6 @@ footer {
     </section>
 
     <section class="commandes-video" id="commandesVideo">
-
         <div class="commande-groupe" id="groupeQualite" hidden>
             <label for="choixQualite">QUALITÉ VIDÉO</label>
             <select id="choixQualite"></select>
@@ -447,7 +584,6 @@ footer {
             <label for="choixAudio">LANGUE AUDIO</label>
             <select id="choixAudio"></select>
         </div>
-
     </section>
 
     <div class="etat-connexion" id="etatConnexion">
@@ -1397,7 +1533,7 @@ function nettoyerOptions(liste) {
     });
 }
 
-/* COMMANDES DU LECTEUR */
+/* COMMANDES DE QUALITÉ, AUDIO ET SOUS-TITRES */
 
 function reinitialiserCommandes() {
     elements.commandes.classList.remove("visible");
@@ -1708,511 +1844,632 @@ function configurerCommandes(video,data) {
     }
 }
 
-/* NOUVELLES FONCTIONS MULTI-APPAREILS */
+/* CONSTRUCTION DES COMMANDES VLC */
 
-function avancerReculer(secondes) {
-    const video = videoActuelle;
+function creerCommandesVLC() {
+    const commandes = document.createElement("div");
 
-    if (
-        !video ||
-        video.tagName !== "VIDEO" ||
-        commandesVerrouillees
-    ) return;
+    commandes.className = "commandes-vlc";
+    commandes.id = "commandesVLC";
+    commandes.setAttribute("aria-label","Commandes du lecteur");
 
-    try {
-        const duree = Number.isFinite(video.duration)
-            ? video.duration
-            : Infinity;
+    commandes.innerHTML = `
+        <div class="vlc-haut">
+            <button type="button" class="vlc-bouton"
+                id="vlcPleinEcran" title="Plein écran"
+                aria-label="Plein écran">⛶</button>
+        </div>
 
-        const nouvellePosition = Math.max(
-            0,
-            Math.min(duree,video.currentTime + secondes)
-        );
+        <div class="vlc-centre">
+            <button type="button" class="vlc-bouton"
+                id="vlcReculer" title="Reculer de 10 secondes"
+                aria-label="Reculer de 10 secondes">↶ 10</button>
 
-        video.currentTime = nouvellePosition;
+            <button type="button" class="vlc-bouton principal"
+                id="vlcLecture" title="Lecture"
+                aria-label="Lecture">▶</button>
 
-    } catch(erreur) {
-        console.warn("Déplacement vidéo impossible :",erreur);
-    }
+            <button type="button" class="vlc-bouton"
+                id="vlcAvancer" title="Avancer de 10 secondes"
+                aria-label="Avancer de 10 secondes">10 ↷</button>
+        </div>
+
+        <div class="vlc-bas">
+            <div class="vlc-ligne-progression">
+                <span class="vlc-temps" id="vlcTempsActuel">00:00</span>
+                <input class="vlc-progression" id="vlcProgression"
+                    type="range" min="0" max="1000" value="0"
+                    step="1" aria-label="Position de lecture">
+                <span class="vlc-temps" id="vlcDuree">00:00</span>
+            </div>
+
+            <div class="vlc-ligne-outils">
+                <div class="vlc-groupe">
+                    <button type="button" class="vlc-bouton"
+                        id="vlcMuet" title="Couper le son"
+                        aria-label="Couper le son">🔊</button>
+
+                    <input class="vlc-volume" id="vlcVolume"
+                        type="range" min="0" max="1" step="0.05"
+                        value="1" aria-label="Volume">
+                </div>
+
+                <select class="vlc-vitesse" id="vlcVitesse"
+                    aria-label="Vitesse de lecture">
+                    <option value="0.5">0,5×</option>
+                    <option value="0.75">0,75×</option>
+                    <option value="1" selected>1×</option>
+                    <option value="1.25">1,25×</option>
+                    <option value="1.5">1,5×</option>
+                    <option value="1.75">1,75×</option>
+                    <option value="2">2×</option>
+                </select>
+            </div>
+        </div>
+    `;
+
+    return commandes;
 }
 
-elements.reculer.addEventListener("click",function() {
-    avancerReculer(-10);
-});
-
-elements.avancer.addEventListener("click",function() {
-    avancerReculer(10);
-});
-
-elements.vitesse.addEventListener("change",function() {
-    if (!videoActuelle || videoActuelle.tagName !== "VIDEO") {
-        return;
+function formaterHorloge(secondes) {
+    if (!Number.isFinite(secondes) || secondes < 0) {
+        return "00:00";
     }
 
-    const vitesse = Number(this.value);
+    secondes = Math.floor(secondes);
 
-    if (
-        Number.isFinite(vitesse) &&
-        vitesse >= 0.5 &&
-        vitesse <= 2
-    ) {
-        videoActuelle.playbackRate = vitesse;
+    const heures = Math.floor(secondes / 3600);
+    const minutes = Math.floor((secondes % 3600) / 60);
+    const reste = secondes % 60;
+
+    const mm = String(minutes).padStart(2,"0");
+    const ss = String(reste).padStart(2,"0");
+
+    if (heures > 0) {
+        return heures + ":" + mm + ":" + ss;
     }
-});
 
-function estPleinEcran() {
-    return Boolean(
-        document.fullscreenElement ||
-        document.webkitFullscreenElement
-    );
+    return mm + ":" + ss;
 }
 
-async function activerPleinEcran() {
-    const lecteur = elements.lecteur;
-    const video = videoActuelle;
+function mettreAJourCommandesVLC(video) {
+    if (!video || video !== videoActuelle) return;
 
-    try {
-        if (estPleinEcran()) {
-            if (document.exitFullscreen) {
-                await document.exitFullscreen();
-            } else if (document.webkitExitFullscreen) {
-                document.webkitExitFullscreen();
-            }
-            return;
-        }
+    const progression = document.getElementById("vlcProgression");
+    const tempsActuel = document.getElementById("vlcTempsActuel");
+    const duree = document.getElementById("vlcDuree");
+    const lecture = document.getElementById("vlcLecture");
+    const muet = document.getElementById("vlcMuet");
+    const volume = document.getElementById("vlcVolume");
+    const vitesse = document.getElementById("vlcVitesse");
 
-        if (lecteur.requestFullscreen) {
-            await lecteur.requestFullscreen();
-            return;
-        }
+    if (!progression) return;
 
-        if (lecteur.webkitRequestFullscreen) {
-            lecteur.webkitRequestFullscreen();
-            return;
-        }
+    const dureeTotale = Number.isFinite(video.duration)
+        ? video.duration : 0;
 
-        /* Solution de remplacement pour Safari iPhone */
-        if (
-            video &&
-            typeof video.webkitEnterFullscreen === "function"
-        ) {
-            video.webkitEnterFullscreen();
-            return;
-        }
+    progression.max = dureeTotale > 0 ? dureeTotale : 1000;
+    progression.value = dureeTotale > 0
+        ? Math.min(video.currentTime,dureeTotale) : 0;
 
-        afficherMessageVideo(
-            "Le plein écran n'est pas pris en charge par ce navigateur.",
-            false
-        );
+    tempsActuel.textContent =
+        formaterHorloge(video.currentTime);
 
-    } catch(erreur) {
-        console.warn("Plein écran indisponible :",erreur);
+    duree.textContent =
+        formaterHorloge(dureeTotale);
 
-        afficherMessageVideo(
-            "Impossible d'activer le plein écran sur cet appareil.",
-            false
-        );
-    }
-}
-
-elements.pleinEcran.addEventListener("click",function() {
-    activerPleinEcran();
-});
-
-function actualiserEtatVerrouillage() {
-    elements.lecteur.classList.toggle(
-        "commandes-verrouillees",
-        commandesVerrouillees
-    );
-
-    elements.commandesAvancees.classList.toggle(
-        "visible",
-        Boolean(videoActuelle) && !commandesVerrouillees
-    );
-
-    elements.deverrouiller.classList.toggle(
-        "visible",
-        Boolean(videoActuelle) && commandesVerrouillees
-    );
-
-    if (videoActuelle && videoActuelle.tagName === "VIDEO") {
-        videoActuelle.controls = !commandesVerrouillees;
-    }
-
-    elements.verrouiller.textContent =
-        commandesVerrouillees
-            ? "🔒 Verrouillé"
-            : "🔒 Verrouiller";
-
-    elements.deverrouiller.setAttribute(
+    lecture.textContent = video.paused ? "▶" : "Ⅱ";
+    lecture.title = video.paused ? "Lecture" : "Pause";
+    lecture.setAttribute(
         "aria-label",
-        "Déverrouiller les commandes"
+        video.paused ? "Lecture" : "Pause"
     );
+
+    muet.textContent =
+        video.muted || video.volume === 0 ? "🔇" : "🔊";
+
+    muet.title =
+        video.muted ? "Activer le son" : "Couper le son";
+
+    volume.value = video.muted ? 0 : video.volume;
+    vitesse.value = String(video.playbackRate);
 }
 
-function verrouillerCommandes(verrouiller) {
-    commandesVerrouillees = Boolean(verrouiller);
-    actualiserEtatVerrouillage();
+function configurerCommandesVLC(video) {
+    const commandes = creerCommandesVLC();
+
+    elements.lecteur.appendChild(commandes);
+
+    const boutonLecture = commandes.querySelector("#vlcLecture");
+    const boutonReculer = commandes.querySelector("#vlcReculer");
+    const boutonAvancer = commandes.querySelector("#vlcAvancer");
+    const boutonPleinEcran = commandes.querySelector("#vlcPleinEcran");
+    const boutonMuet = commandes.querySelector("#vlcMuet");
+
+    const progression = commandes.querySelector("#vlcProgression");
+    const volume = commandes.querySelector("#vlcVolume");
+    const vitesse = commandes.querySelector("#vlcVitesse");
+
+    boutonLecture.addEventListener("click",function() {
+        if (commandesVerrouillees) return;
+
+        if (video.paused) {
+            video.play().catch(function() {
+                afficherMessageVideo(
+                    "Appuyez sur lecture pour démarrer la vidéo.",
+                    false
+                );
+            });
+        } else {
+            video.pause();
+        }
+    });
+
+    boutonReculer.addEventListener("click",function() {
+        if (!commandesVerrouillees) {
+            avancerReculer(-10);
+        }
+    });
+
+    boutonAvancer.addEventListener("click",function() {
+        if (!commandesVerrouillees) {
+            avancerReculer(10);
+        }
+    });
+
+    boutonPleinEcran.addEventListener("click",function() {
+        if (!commandesVerrouillees) {
+            activerPleinEcran();
+        }
+    });
+
+    progression.addEventListener("input",function() {
+        if (
+            commandesVerrouillees ||
+            !Number.isFinite(video.duration)
+        ) return;
+
+        video.currentTime = Number(this.value);
+    });
+
+    boutonMuet.addEventListener("click",function() {
+        if (commandesVerrouillees) return;
+
+        video.muted = !video.muted;
+        mettreAJourCommandesVLC(video);
+    });
+
+    volume.addEventListener("input",function() {
+        if (commandesVerrouillees) return;
+
+        video.volume = Number(this.value);
+        video.muted = video.volume === 0;
+
+        mettreAJourCommandesVLC(video);
+    });
+
+    vitesse.addEventListener("change",function() {
+        if (commandesVerrouillees) return;
+
+        const valeur = Number(this.value);
+
+        if (Number.isFinite(valeur)) {
+            video.playbackRate = valeur;
+            elements.vitesse.value = String(valeur);
+        }
+    });
+
+    [
+        "play",
+        "pause",
+        "timeupdate",
+        "loadedmetadata",
+        "durationchange",
+        "volumechange",
+        "ratechange"
+    ].forEach(function(evenement) {
+        video.addEventListener(evenement,function() {
+            mettreAJourCommandesVLC(video);
+        });
+    });
+
+    elements.vitesse.addEventListener("change",function() {
+        if (video !== videoActuelle || commandesVerrouillees) {
+            return;
+        }
+
+        const valeur = Number(this.value);
+
+        if (Number.isFinite(valeur)) {
+            video.playbackRate = valeur;
+            vitesse.value = String(valeur);
+        }
+    });
+
+    mettreAJourCommandesVLC(video);
 }
 
-elements.verrouiller.addEventListener("click",function() {
-    verrouillerCommandes(true);
-});
+/* AFFICHAGE ET MASQUAGE DES COMMANDES */
 
-elements.deverrouiller.addEventListener("click",function() {
-    verrouillerCommandes(false);
-});
+function afficherCommandesVLC() {
+    const commandes = document.getElementById("commandesVLC");
 
-/* SYNCHRONISATION DU PLEIN ÉCRAN */
+    if (!commandes) return;
 
-function actualiserBoutonPleinEcran() {
-    elements.pleinEcran.textContent = estPleinEcran()
-        ? "⛶ Quitter plein écran"
-        : "⛶ Plein écran";
+    commandes.hidden = false;
+    commandes.classList.remove("cache");
 }
 
-document.addEventListener(
-    "fullscreenchange",
-    actualiserBoutonPleinEcran
-);
+function masquerCommandesVLC() {
+    const commandes = document.getElementById("commandesVLC");
 
-document.addEventListener(
-    "webkitfullscreenchange",
-    actualiserBoutonPleinEcran
-);
+    if (!commandes) return;
 
-/* LECTEUR VIDÉO */
+    commandes.classList.add("cache");
+}
+
+/* CRÉATION DU LECTEUR VIDÉO */
 
 function supprimerAncienneVideo() {
     operationSource++;
     operationSousTitres++;
 
-    const ancienneVideo =
-        elements.lecteur.querySelector("video,iframe");
+    if (videoActuelle) {
+        sauvegarderProgression(videoActuelle);
 
-    if (ancienneVideo) {
-        if (ancienneVideo.tagName === "VIDEO") {
-            sauvegarderProgression(ancienneVideo);
-
-            ancienneVideo.pause();
-            ancienneVideo.removeAttribute("src");
-            ancienneVideo.load();
-        }
-
-        ancienneVideo.remove();
+        videoActuelle.pause();
+        videoActuelle.removeAttribute("src");
+        videoActuelle.load();
     }
 
     videoActuelle = null;
-    verrouillerCommandes(false);
+
+    const ancienneVideo = elements.lecteur.querySelector("video");
+    const ancienIframe = elements.lecteur.querySelector("iframe");
+    const anciennesCommandes = elements.lecteur.querySelector(
+        ".commandes-vlc"
+    );
+
+    if (ancienneVideo) ancienneVideo.remove();
+    if (ancienIframe) ancienIframe.remove();
+
+    if (anciennesCommandes) {
+        anciennesCommandes.remove();
+    }
+
+    elements.lecteur.classList.remove("verrouille");
+    elements.lecteur.classList.remove("lecture-active");
 
     reinitialiserCommandes();
 }
 
-function afficherErreurLecture(message) {
-    afficherMessageVideo(message,false);
-    elements.reessayer.classList.add("visible");
-}
-
-function afficherLecteur(url,titre,data) {
-    supprimerAncienneVideo();
-
-    elements.reessayer.classList.remove("visible");
-
-    if (/youtube\.com|youtu\.be/i.test(url)) {
-        const lien = convertirYouTube(url);
-
-        if (!lien) {
-            afficherErreurLecture(
-                "Le lien YouTube est invalide."
-            );
-            return;
-        }
-
-        const iframe = document.createElement("iframe");
-
-        iframe.src = lien;
-        iframe.title = titre;
-
-        iframe.allow =
-            "autoplay; encrypted-media; picture-in-picture; fullscreen";
-
-        iframe.allowFullscreen = true;
-
-        iframe.referrerPolicy =
-            "strict-origin-when-cross-origin";
-
-        elements.lecteur.appendChild(iframe);
-
-        masquerMessageVideo();
-        return;
-    }
-
-    if (/vimeo\.com/i.test(url)) {
-        const lien = convertirVimeo(url);
-
-        if (!lien) {
-            afficherErreurLecture(
-                "Le lien Vimeo est invalide."
-            );
-            return;
-        }
-
-        const iframe = document.createElement("iframe");
-
-        iframe.src = lien;
-        iframe.title = titre;
-
-        iframe.allow =
-            "autoplay; fullscreen; picture-in-picture";
-
-        iframe.allowFullscreen = true;
-
-        elements.lecteur.appendChild(iframe);
-
-        masquerMessageVideo();
-        return;
-    }
-
+function creerVideoHTML5(url) {
     const video = document.createElement("video");
 
-    video.controls = true;
-    video.playsInline = true;
-    video.preload = "metadata";
+    video.id = "mobilusVideo";
+    video.className = "mobilus-video";
 
+    video.preload = "metadata";
+    video.playsInline = true;
     video.setAttribute("playsinline","");
     video.setAttribute("webkit-playsinline","");
+    video.setAttribute("disablepictureinpicture","");
 
-    videoActuelle = video;
+    video.controls = false;
+    video.autoplay = false;
 
-    let progressionRestauree = false;
+    video.volume = 1;
+    video.playbackRate = 1;
 
-    video.addEventListener("loadstart",function() {
+    video.addEventListener("error",function() {
+        if (video !== videoActuelle) return;
+
         afficherMessageVideo(
-            "Chargement de la vidéo...",
-            true
+            "Une erreur est survenue pendant la lecture. Vérifiez votre connexion ou réessayez.",
+            false
         );
-    });
-
-    video.addEventListener("waiting",function() {
-        afficherMessageVideo(
-            "Mise en mémoire tampon...",
-            true
-        );
-    });
-
-    video.addEventListener("loadedmetadata",function() {
-        if (progressionRestauree) return;
-
-        progressionRestauree = true;
-
-        restaurerProgression(video);
-    });
-
-    video.addEventListener("canplay",function() {
-        masquerMessageVideo();
     });
 
     video.addEventListener("playing",function() {
+        if (video !== videoActuelle) return;
+
         masquerMessageVideo();
+        elements.lecteur.classList.add("lecture-active");
 
-        elements.reessayer.classList.remove("visible");
-
-        compterVuePremium();
-    });
-
-    video.addEventListener("timeupdate",function() {
-        sauvegarderProgression(video);
+        if (utilisateurPremium) {
+            compterVuePremium();
+        }
     });
 
     video.addEventListener("pause",function() {
+        if (video !== videoActuelle) return;
+
+        sauvegarderProgression(video);
+    });
+
+    video.addEventListener("timeupdate",function() {
+        if (video !== videoActuelle) return;
+
         sauvegarderProgression(video);
     });
 
     video.addEventListener("ended",function() {
-        try {
-            localStorage.removeItem(
-                obtenirCleProgression()
-            );
-        } catch(erreur) {}
-    });
+        if (video !== videoActuelle) return;
 
-    video.addEventListener("error",function() {
-        afficherErreurLecture(
-            "Impossible de lire cette vidéo. Vérifiez que le fichier est accessible et réessayez."
+        sauvegarderProgression(video);
+
+        afficherMessageVideo(
+            "Lecture terminée.",
+            false
         );
     });
 
-    elements.lecteur.appendChild(video);
-
-    configurerCommandes(video,data);
-
-    /* Afficher les commandes avancées */
-    elements.commandesAvancees.classList.add("visible");
-
-    elements.vitesse.value = "1";
-    video.playbackRate = 1;
-
-    afficherMessageVideo(
-        "Chargement de la vidéo...",
-        true
-    );
-
     video.src = url;
-    video.load();
 
-    video.play().catch(function() {
-        masquerMessageVideo();
-    });
+    return video;
 }
 
-/* PROTECTION DES VIDÉOS PRIVÉES */
+function creerLecteurExterne(url,type) {
+    const iframe = document.createElement("iframe");
 
-function estCheminPrive(url) {
-    if (typeof url !== "string") return false;
+    iframe.className = "mobilus-video-externe";
+    iframe.src = url;
 
-    const chemin = url.trim();
+    iframe.title = "Lecteur vidéo MOBILUS";
+    iframe.allow =
+        "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen";
 
-    return (
-        chemin.startsWith("mobilus-videos/") ||
-        chemin.startsWith("videos/")
-    );
+    iframe.allowFullscreen = true;
+    iframe.setAttribute("referrerpolicy","strict-origin-when-cross-origin");
+
+    elements.lecteur.appendChild(iframe);
+
+    elements.commandesAvancees.classList.remove("visible");
+
+    elements.lecteur.classList.add("lecture-active");
+
+    if (utilisateurPremium) {
+        compterVuePremium();
+    }
 }
 
-/* LANCEMENT DU FILM */
+function estURLYouTube(url) {
+    try {
+        const adresse = new URL(url);
+        const domaine = adresse.hostname.toLowerCase();
 
-async function regarderFilm(nouvelleSession) {
-    if (!filmActuel) return;
+        return (
+            domaine === "youtube.com" ||
+            domaine === "www.youtube.com" ||
+            domaine === "m.youtube.com" ||
+            domaine === "youtu.be" ||
+            domaine === "www.youtube-nocookie.com"
+        );
+    } catch(erreur) {
+        return false;
+    }
+}
 
-    if (!navigator.onLine) {
+function estURLVimeo(url) {
+    try {
+        const adresse = new URL(url);
+        const domaine = adresse.hostname.toLowerCase();
+
+        return (
+            domaine === "vimeo.com" ||
+            domaine === "www.vimeo.com" ||
+            domaine === "player.vimeo.com"
+        );
+    } catch(erreur) {
+        return false;
+    }
+}
+
+function convertirURLExterne(url) {
+    try {
+        const adresse = new URL(url);
+        const domaine = adresse.hostname.toLowerCase();
+
+        if (
+            domaine === "youtu.be" ||
+            domaine === "www.youtu.be"
+        ) {
+            const identifiant = adresse.pathname
+                .split("/")
+                .filter(Boolean)[0];
+
+            if (!identifiant) return null;
+
+            return (
+                "https://www.youtube-nocookie.com/embed/" +
+                encodeURIComponent(identifiant) +
+                "?autoplay=1&rel=0"
+            );
+        }
+
+        if (
+            domaine === "youtube.com" ||
+            domaine === "www.youtube.com" ||
+            domaine === "m.youtube.com"
+        ) {
+            let identifiant = adresse.searchParams.get("v");
+
+            if (!identifiant && adresse.pathname.includes("/embed/")) {
+                identifiant = adresse.pathname.split("/embed/")[1];
+            }
+
+            if (!identifiant && adresse.pathname.includes("/shorts/")) {
+                identifiant = adresse.pathname.split("/shorts/")[1];
+            }
+
+            if (!identifiant) return null;
+
+            return (
+                "https://www.youtube-nocookie.com/embed/" +
+                encodeURIComponent(identifiant) +
+                "?autoplay=1&rel=0"
+            );
+        }
+
+        if (
+            domaine === "vimeo.com" ||
+            domaine === "www.vimeo.com" ||
+            domaine === "player.vimeo.com"
+        ) {
+            const identifiant = adresse.pathname
+                .split("/")
+                .filter(Boolean)
+                .pop();
+
+            if (!identifiant || !/^\d+$/.test(identifiant)) {
+                return null;
+            }
+
+            return (
+                "https://player.vimeo.com/video/" +
+                identifiant +
+                "?autoplay=1"
+            );
+        }
+
+    } catch(erreur) {
+        console.error("URL externe invalide :",erreur);
+    }
+
+    return null;
+}
+
+/* LANCEMENT DE LA LECTURE */
+
+async function lancerLecture() {
+    if (!filmActuel) {
         afficherMessageVideo(
-            "Vérifiez votre connexion Internet avant de lancer le film.",
+            "Aucun contenu n'a été sélectionné.",
             false
         );
         return;
     }
 
-    if (
-        nouvelleSession === true ||
-        !sessionLectureId
-    ) {
-        try {
-            preparerNouvelleSessionLecture();
-        } catch(erreur) {
-            afficherErreurLecture(erreur.message);
-            return;
-        }
-    }
+    supprimerAncienneVideo();
+    preparerNouvelleSessionLecture();
 
-    elements.regarder.disabled = true;
-    elements.regarder.textContent = "Chargement...";
-
-    elements.reessayer.classList.remove("visible");
+    afficherMessageVideo(
+        "Préparation de votre vidéo...",
+        true
+    );
 
     try {
-        const url = obtenirVideo(filmActuel);
+        const urlOriginale = String(
+            filmActuel.video_url || ""
+        ).trim();
 
-        if (!url) {
-            afficherErreurLecture(
-                "Aucune vidéo n'est configurée pour ce contenu."
+        if (!urlOriginale) {
+            throw new Error(
+                "Aucune vidéo n'est disponible pour ce contenu."
             );
+        }
+
+        let urlLecture = urlOriginale;
+        let donneesSecurisees = {};
+
+        const cheminPrive =
+            urlOriginale.includes("mobilus-videos/") ||
+            urlOriginale.includes("videos/");
+
+        if (cheminPrive) {
+            donneesSecurisees = await obtenirLiensSecurises();
+
+            urlLecture = donneesSecurisees.video_url;
+        }
+
+        if (!estURLWeb(urlLecture)) {
+            throw new Error("Le lien vidéo est invalide.");
+        }
+
+        if (
+            estURLYouTube(urlLecture) ||
+            estURLVimeo(urlLecture)
+        ) {
+            const urlExterne = convertirURLExterne(urlLecture);
+
+            if (!urlExterne) {
+                throw new Error(
+                    "Impossible de préparer cette vidéo externe."
+                );
+            }
+
+            masquerMessageVideo();
+            creerLecteurExterne(urlExterne);
+
             return;
         }
 
-        let urlFinale = url;
+        const video = creerVideoHTML5(urlLecture);
 
-        let donneesSecurisees = {
-            video_qualities:[],
-            subtitles:[],
-            audio_tracks:[]
-        };
+        videoActuelle = video;
 
-        const contenuPrive = estCheminPrive(url);
+        elements.lecteur.appendChild(video);
 
-        const premium =
-            String(filmActuel.niveau_acces)
-            .toLowerCase() === "premium";
+        configurerCommandesVLC(video);
 
-        if (premium && !contenuPrive) {
-            throw new Error(
-                "Cette vidéo Premium doit être stockée dans le bucket privé MOBILUS."
-            );
-        }
-
-        if (contenuPrive) {
-            const resultat = await obtenirLiensSecurises();
-
-            urlFinale = resultat.video_url;
-
-            donneesSecurisees = {
-                video_qualities:
-                    resultat.video_qualities || [],
-
-                subtitles:
-                    resultat.subtitles || [],
-
-                audio_tracks:
-                    resultat.audio_tracks || []
-            };
-
-        } else if (!estURLWeb(url)) {
-            throw new Error(
-                "Le lien vidéo n'est pas reconnu. Vérifiez son adresse."
-            );
-        }
-
-        afficherLecteur(
-            urlFinale,
-            obtenirTitre(filmActuel),
+        configurerCommandes(
+            video,
             donneesSecurisees
         );
 
-    } catch(erreur) {
-        console.error("Erreur lecture vidéo :",erreur);
+        elements.commandesAvancees.classList.add("visible");
 
-        afficherErreurLecture(
-            erreur.message ||
-            "Impossible de lancer cette vidéo. Vérifiez votre abonnement ou réessayez."
+        actualiserEtatVerrouillage();
+
+        restaurerProgression(video);
+
+        mettreAJourCommandesVLC(video);
+
+        afficherMessageVideo(
+            "Chargement de la vidéo...",
+            true
         );
 
-    } finally {
-        elements.regarder.disabled = false;
+        try {
+            await video.play();
 
-        elements.regarder.textContent =
-            "▶ Regarder le film";
+        } catch(erreurLecture) {
+            masquerMessageVideo();
+
+            afficherMessageVideo(
+                "Appuyez sur le bouton Lecture pour démarrer.",
+                false
+            );
+        }
+
+    } catch(erreur) {
+        console.error("Erreur de lancement :",erreur);
+
+        afficherMessageVideo(
+            erreur.message ||
+            "Impossible de lancer cette vidéo.",
+            false
+        );
     }
 }
 
-elements.regarder.addEventListener("click",function() {
-    regarderFilm(true);
-});
-
-elements.reessayer.addEventListener("click",function() {
-    if (!filmActuel) return;
-
-    elements.reessayer.classList.remove("visible");
-
-    supprimerAncienneVideo();
-
-    regarderFilm(false);
-});
-
-/* CONNEXION INTERNET */
-
-window.addEventListener("offline",function() {
-    elements.connexion.classList.add("visible");
-
-    if (videoActuelle) {
-        sauvegarderProgression(videoActuelle);
-    }
-});
+/* GESTION DE LA CONNEXION */
 
 window.addEventListener("online",function() {
-    elements.connexion.classList.remove("visible");
+    if (videoActuelle) {
+        afficherMessageVideo(
+            "Connexion rétablie.",
+            false
+        );
+    }
 });
 
-if (!navigator.onLine) {
-    elements.connexion.classList.add("visible");
-}
+window.addEventListener("offline",function() {
+    afficherMessageVideo(
+        "Vous êtes hors connexion. Vérifiez votre réseau.",
+        false
+    );
+});
 
 /* SAUVEGARDE AVANT DE QUITTER */
 
@@ -2231,23 +2488,165 @@ document.addEventListener("visibilitychange",function() {
     }
 });
 
-/* RETOUR À L'ACCUEIL */
+/* RACCOURCIS CLAVIER */
 
-elements.retour.addEventListener("click",function() {
-    if (videoActuelle) {
-        sauvegarderProgression(videoActuelle);
-        videoActuelle.pause();
+document.addEventListener("keydown",function(evenement) {
+    if (!videoActuelle || commandesVerrouillees) return;
+
+    const cible = evenement.target;
+
+    if (
+        cible &&
+        (
+            cible.tagName === "INPUT" ||
+            cible.tagName === "SELECT" ||
+            cible.tagName === "TEXTAREA"
+        )
+    ) return;
+
+    if (evenement.code === "Space") {
+        evenement.preventDefault();
+
+        if (videoActuelle.paused) {
+            videoActuelle.play().catch(function() {});
+        } else {
+            videoActuelle.pause();
+        }
     }
 
-    location.replace("index.html");
+    if (evenement.key === "ArrowRight") {
+        avancerReculer(10);
+    }
+
+    if (evenement.key === "ArrowLeft") {
+        avancerReculer(-10);
+    }
+
+    if (evenement.key.toLowerCase() === "f") {
+        activerPleinEcran();
+    }
+
+    if (evenement.key.toLowerCase() === "m") {
+        videoActuelle.muted = !videoActuelle.muted;
+    }
 });
 
-/* DÉMARRAGE */
+/* BOUTON RETOUR */
 
-chargerContenu();
+if (elements.retour) {
+    elements.retour.addEventListener("click",function() {
+        if (videoActuelle) {
+            sauvegarderProgression(videoActuelle);
+            videoActuelle.pause();
+        }
+
+        if (history.length > 1) {
+            history.back();
+        } else {
+            location.href = "index.html";
+        }
+    });
+}
+
+/* BOUTON RELANCER */
+
+if (elements.reessayer) {
+    elements.reessayer.addEventListener("click",function() {
+        lancerLecture();
+    });
+}
+
+/* DÉMARRAGE DE LA PAGE */
+
+async function initialiserPageFilm() {
+    try {
+        afficherChargement(true);
+
+        const db = window.mobilusDB;
+
+        if (!db) {
+            throw new Error(
+                "La connexion à MOBILUS est indisponible."
+            );
+        }
+
+        const sessionResultat = await db.auth.getSession();
+
+        if (
+            sessionResultat.error ||
+            !sessionResultat.data.session
+        ) {
+            location.replace("connexion.html");
+            return;
+        }
+
+        utilisateurActuel = sessionResultat.data.session.user;
+
+        const identifiant = new URLSearchParams(
+            window.location.search
+        ).get("id");
+
+        if (!identifiant) {
+            throw new Error(
+                "Identifiant du contenu manquant."
+            );
+        }
+
+        const resultat = await db
+            .from("contenus")
+            .select("*")
+            .eq("id",identifiant)
+            .eq("publie",true)
+            .maybeSingle();
+
+        if (resultat.error) throw resultat.error;
+
+        if (!resultat.data) {
+            throw new Error(
+                "Ce contenu est introuvable ou n'est plus publié."
+            );
+        }
+
+        filmActuel = normaliserContenu(resultat.data);
+
+        if (!filmActuel) {
+            throw new Error(
+                "Impossible de lire les informations de ce contenu."
+            );
+        }
+
+        await verifierAccesPremium();
+
+        afficherInformationsFilm();
+
+        chargerFilmsSimilaires();
+
+        configurerFavoris();
+
+        afficherHistoriqueRecent();
+
+        await lancerLecture();
+
+    } catch(erreur) {
+        console.error(
+            "Erreur d'initialisation MOBILUS :",
+            erreur
+        );
+
+        afficherMessageVideo(
+            erreur.message ||
+            "Une erreur est survenue lors du chargement du contenu.",
+            false
+        );
+
+    } finally {
+        afficherChargement(false);
+    }
+}
+
+initialiserPageFilm();
 
 })();
 </script>
-
 </body>
 </html>
