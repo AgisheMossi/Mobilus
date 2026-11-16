@@ -104,6 +104,92 @@ button,select {font:inherit;cursor:pointer}
 }
 .lecteur video {object-fit:contain}
 
+/* NOUVELLES COMMANDES DU LECTEUR */
+
+.commandes-avancees {
+    display:none;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:center;
+    gap:9px;
+    padding:12px;
+    margin-bottom:18px;
+    background:#151515;
+    border:1px solid #292929;
+    border-radius:9px;
+}
+.commandes-avancees.visible {display:flex}
+
+.commandes-avancees button,
+.commandes-avancees select {
+    min-height:42px;
+    padding:9px 13px;
+    border-radius:7px;
+    border:1px solid #444;
+    background:#252525;
+    color:#fff;
+    font-size:13px;
+}
+.commandes-avancees button:active {
+    background:var(--rouge);
+}
+.commandes-avancees button:focus-visible,
+.commandes-avancees select:focus-visible,
+.bouton-deverrouiller:focus-visible {
+    outline:2px solid var(--jaune);
+    outline-offset:3px;
+}
+.commandes-avancees .bouton-verrouiller {
+    background:#351010;
+    border-color:#7c2020;
+}
+.commandes-avancees .bouton-plein-ecran {
+    background:#202020;
+}
+.groupe-vitesse {
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+    min-width:105px;
+}
+.groupe-vitesse label {
+    color:#aaa;
+    font-size:10px;
+    font-weight:bold;
+}
+.groupe-vitesse select {
+    width:100%;
+}
+.bouton-deverrouiller {
+    position:absolute;
+    z-index:5;
+    right:14px;
+    top:14px;
+    min-width:48px;
+    min-height:48px;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:10px;
+    border-radius:50%;
+    border:1px solid #777;
+    color:#fff;
+    background:rgba(20,20,20,.9);
+    font-size:21px;
+}
+.bouton-deverrouiller.visible {
+    display:flex;
+}
+.lecteur.commandes-verrouillees video {
+    pointer-events:none;
+}
+.lecteur.commandes-verrouillees .bouton-deverrouiller {
+    pointer-events:auto;
+}
+.commandes-avancees[hidden] {display:none}
+
+/* MESSAGE VIDÉO */
+
 .message-video {
     position:absolute;inset:0;z-index:2;
     display:flex;flex-direction:column;align-items:center;
@@ -230,6 +316,23 @@ footer {
     }
     .titre-carte-similaire {font-size:14px}
 }
+@media(max-width:480px) {
+    .commandes-avancees {
+        display:none;
+        gap:7px;
+        padding:10px;
+    }
+    .commandes-avancees.visible {display:flex}
+    .commandes-avancees button {
+        flex:1 1 40%;
+        min-width:0;
+        padding:9px 7px;
+        font-size:12px;
+    }
+    .groupe-vitesse {
+        flex:1 1 40%;
+    }
+}
 @media(prefers-reduced-motion:reduce) {
     .cercle-chargement,.indicateur-video {animation:none}
     .ecran-chargement {transition:none}
@@ -283,6 +386,47 @@ footer {
                 Préparation de la vidéo...
             </span>
         </div>
+
+        <button
+            type="button"
+            class="bouton-deverrouiller"
+            id="boutonDeverrouiller"
+            aria-label="Déverrouiller les commandes"
+            title="Déverrouiller les commandes"
+        >🔓</button>
+    </section>
+
+    <section class="commandes-avancees" id="commandesAvancees" aria-label="Commandes avancées">
+
+        <button type="button" id="boutonReculer" title="Reculer de 10 secondes">
+            ↶ 10 s
+        </button>
+
+        <button type="button" id="boutonAvancer" title="Avancer de 10 secondes">
+            10 s ↷
+        </button>
+
+        <div class="groupe-vitesse">
+            <label for="choixVitesse">VITESSE</label>
+            <select id="choixVitesse">
+                <option value="0.5">0,5×</option>
+                <option value="0.75">0,75×</option>
+                <option value="1" selected>Normal (1×)</option>
+                <option value="1.25">1,25×</option>
+                <option value="1.5">1,5×</option>
+                <option value="1.75">1,75×</option>
+                <option value="2">2×</option>
+            </select>
+        </div>
+
+        <button type="button" class="bouton-plein-ecran" id="boutonPleinEcran">
+            ⛶ Plein écran
+        </button>
+
+        <button type="button" class="bouton-verrouiller" id="boutonVerrouiller">
+            🔒 Verrouiller
+        </button>
+
     </section>
 
     <section class="commandes-video" id="commandesVideo">
@@ -381,7 +525,15 @@ const elements = {
     compteurVues:document.getElementById("compteurVues"),
     nombreVues:document.getElementById("nombreVues"),
     sectionSimilaires:document.getElementById("sectionFilmsSimilaires"),
-    grilleSimilaires:document.getElementById("grilleFilmsSimilaires")
+    grilleSimilaires:document.getElementById("grilleFilmsSimilaires"),
+
+    commandesAvancees:document.getElementById("commandesAvancees"),
+    reculer:document.getElementById("boutonReculer"),
+    avancer:document.getElementById("boutonAvancer"),
+    vitesse:document.getElementById("choixVitesse"),
+    pleinEcran:document.getElementById("boutonPleinEcran"),
+    verrouiller:document.getElementById("boutonVerrouiller"),
+    deverrouiller:document.getElementById("boutonDeverrouiller")
 };
 
 document.getElementById("anneeActuelle").textContent =
@@ -399,6 +551,7 @@ let comptageEnCours = false;
 
 let operationSource = 0;
 let operationSousTitres = 0;
+let commandesVerrouillees = false;
 
 function terminerChargement() {
     if (chargementTermine) return;
@@ -1248,6 +1401,7 @@ function nettoyerOptions(liste) {
 
 function reinitialiserCommandes() {
     elements.commandes.classList.remove("visible");
+    elements.commandesAvancees.classList.remove("visible");
 
     elements.groupeQualite.hidden = true;
     elements.groupeSousTitres.hidden = true;
@@ -1263,6 +1417,8 @@ function reinitialiserCommandes() {
     elements.qualite.onchange = null;
     elements.sousTitres.onchange = null;
     elements.audio.onchange = null;
+
+    verrouillerCommandes(false);
 }
 
 function ajouterOption(selecteur,label,valeur) {
@@ -1552,6 +1708,179 @@ function configurerCommandes(video,data) {
     }
 }
 
+/* NOUVELLES FONCTIONS MULTI-APPAREILS */
+
+function avancerReculer(secondes) {
+    const video = videoActuelle;
+
+    if (
+        !video ||
+        video.tagName !== "VIDEO" ||
+        commandesVerrouillees
+    ) return;
+
+    try {
+        const duree = Number.isFinite(video.duration)
+            ? video.duration
+            : Infinity;
+
+        const nouvellePosition = Math.max(
+            0,
+            Math.min(duree,video.currentTime + secondes)
+        );
+
+        video.currentTime = nouvellePosition;
+
+    } catch(erreur) {
+        console.warn("Déplacement vidéo impossible :",erreur);
+    }
+}
+
+elements.reculer.addEventListener("click",function() {
+    avancerReculer(-10);
+});
+
+elements.avancer.addEventListener("click",function() {
+    avancerReculer(10);
+});
+
+elements.vitesse.addEventListener("change",function() {
+    if (!videoActuelle || videoActuelle.tagName !== "VIDEO") {
+        return;
+    }
+
+    const vitesse = Number(this.value);
+
+    if (
+        Number.isFinite(vitesse) &&
+        vitesse >= 0.5 &&
+        vitesse <= 2
+    ) {
+        videoActuelle.playbackRate = vitesse;
+    }
+});
+
+function estPleinEcran() {
+    return Boolean(
+        document.fullscreenElement ||
+        document.webkitFullscreenElement
+    );
+}
+
+async function activerPleinEcran() {
+    const lecteur = elements.lecteur;
+    const video = videoActuelle;
+
+    try {
+        if (estPleinEcran()) {
+            if (document.exitFullscreen) {
+                await document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            }
+            return;
+        }
+
+        if (lecteur.requestFullscreen) {
+            await lecteur.requestFullscreen();
+            return;
+        }
+
+        if (lecteur.webkitRequestFullscreen) {
+            lecteur.webkitRequestFullscreen();
+            return;
+        }
+
+        /* Solution de remplacement pour Safari iPhone */
+        if (
+            video &&
+            typeof video.webkitEnterFullscreen === "function"
+        ) {
+            video.webkitEnterFullscreen();
+            return;
+        }
+
+        afficherMessageVideo(
+            "Le plein écran n'est pas pris en charge par ce navigateur.",
+            false
+        );
+
+    } catch(erreur) {
+        console.warn("Plein écran indisponible :",erreur);
+
+        afficherMessageVideo(
+            "Impossible d'activer le plein écran sur cet appareil.",
+            false
+        );
+    }
+}
+
+elements.pleinEcran.addEventListener("click",function() {
+    activerPleinEcran();
+});
+
+function actualiserEtatVerrouillage() {
+    elements.lecteur.classList.toggle(
+        "commandes-verrouillees",
+        commandesVerrouillees
+    );
+
+    elements.commandesAvancees.classList.toggle(
+        "visible",
+        Boolean(videoActuelle) && !commandesVerrouillees
+    );
+
+    elements.deverrouiller.classList.toggle(
+        "visible",
+        Boolean(videoActuelle) && commandesVerrouillees
+    );
+
+    if (videoActuelle && videoActuelle.tagName === "VIDEO") {
+        videoActuelle.controls = !commandesVerrouillees;
+    }
+
+    elements.verrouiller.textContent =
+        commandesVerrouillees
+            ? "🔒 Verrouillé"
+            : "🔒 Verrouiller";
+
+    elements.deverrouiller.setAttribute(
+        "aria-label",
+        "Déverrouiller les commandes"
+    );
+}
+
+function verrouillerCommandes(verrouiller) {
+    commandesVerrouillees = Boolean(verrouiller);
+    actualiserEtatVerrouillage();
+}
+
+elements.verrouiller.addEventListener("click",function() {
+    verrouillerCommandes(true);
+});
+
+elements.deverrouiller.addEventListener("click",function() {
+    verrouillerCommandes(false);
+});
+
+/* SYNCHRONISATION DU PLEIN ÉCRAN */
+
+function actualiserBoutonPleinEcran() {
+    elements.pleinEcran.textContent = estPleinEcran()
+        ? "⛶ Quitter plein écran"
+        : "⛶ Plein écran";
+}
+
+document.addEventListener(
+    "fullscreenchange",
+    actualiserBoutonPleinEcran
+);
+
+document.addEventListener(
+    "webkitfullscreenchange",
+    actualiserBoutonPleinEcran
+);
+
 /* LECTEUR VIDÉO */
 
 function supprimerAncienneVideo() {
@@ -1574,6 +1903,7 @@ function supprimerAncienneVideo() {
     }
 
     videoActuelle = null;
+    verrouillerCommandes(false);
 
     reinitialiserCommandes();
 }
@@ -1715,6 +2045,12 @@ function afficherLecteur(url,titre,data) {
     elements.lecteur.appendChild(video);
 
     configurerCommandes(video,data);
+
+    /* Afficher les commandes avancées */
+    elements.commandesAvancees.classList.add("visible");
+
+    elements.vitesse.value = "1";
+    video.playbackRate = 1;
 
     afficherMessageVideo(
         "Chargement de la vidéo...",
