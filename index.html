@@ -1100,14 +1100,10 @@
 <script type="module">
     import { createClient }
     from "https://esm.sh/@supabase/supabase-js@2";
-    const SUPABASE_URL =
-        "https://uoxccezhznxmgggjupqd.supabase.co";
-    const SUPABASE_KEY =
-        "sb_publishable_-3OGf57zowok1GS8s0e9g_QQg2pVRmO";
-    const supabase = createClient(
-        SUPABASE_URL,
-        SUPABASE_KEY
-    );
+    const SUPABASE_URL = "https://uoxccezhznxmgggjupqd.supabase.co";
+const SUPABASE_KEY = "sb_publishable_-3OGf57zowok1GS8s0e9g_QQg2pVRmO";
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
     const loading =
         document.getElementById("mobilus-loading");
     const loadingError =
@@ -1149,9 +1145,8 @@
             document.getElementById("anneeActuelle").textContent =
                 new Date().getFullYear();
             // ARRÊT DU CHARGEMENT APRÈS 5 SECONDES
-            setTimeout(function () {
-                masquerChargement();
-            }, 5000);
+            setTimeout(masquerChargement, 600);
+
             // NAVIGATION AVEC ANIMATION DE 3 SECONDES
             document.querySelectorAll(
                 "#navAccueil, #navTelechargements, #navRecent, #navProfil"
